@@ -43,6 +43,7 @@ relying on colour.
 | `N` | Pencil marks on or off |
 | `Z` / `Y` | Undo / redo |
 | `H` | Reveal one colour |
+| `T` | Symbols on or off |
 | `P` | Pause |
 | `S` | Open colours & settings |
 | `?` | The shortcut list |
@@ -55,6 +56,11 @@ rather than between cells. `[` and `]` do the jumping between empty cells that
 
 Pencil marks show as small dots, one per possible colour. Placing a colour
 clears that mark from every cell in the same row, column and box.
+
+Picking a colour — from the palette or with `1`–`9` — outlines every cell that
+already holds it, so you can sweep the board for one colour without having to
+find a cell containing it first. Selecting a cell that holds a colour highlights
+that one instead.
 
 Your board, palette and best times are kept in `localStorage`, so closing the
 tab does not lose the game. In a browser that blocks storage the app still runs,
@@ -75,16 +81,20 @@ Six presets ship with the app:
 | **Grey scale** | Nine steps of lightness, for playing without colour at all. |
 | **Neon** | Bright colours built for the dark theme. |
 
-Beyond the presets you can set each of the nine colours individually with a
-colour picker or a hex value, shuffle their order, and save the result as a
-preset of your own.
+Each of the nine numbers gets one colour, and the editor shows that mapping
+directly: the swatch is stamped with its number, and you set its colour with a
+picker or a hex value. `⇄` trades two numbers' colours — click it on one number,
+then on the number you want to trade with. You can also shuffle the order at
+random, and save the result as a preset of your own.
 
 ### Making the board readable
 
 Colour alone is not enough for everyone, so the palette is only one of the cues:
 
-- **Symbols.** Numbers, letters or shapes can be drawn on top of every colour.
-  The ink is picked automatically per swatch, always at 4.5:1 contrast or better.
+- **Symbols.** Numbers, letters or shapes can be drawn on top of every colour,
+  toggled from the board with the Symbols button or `T` — it brings back the set
+  you last used rather than always jumping to numbers. The ink is picked
+  automatically per swatch, always at 4.5:1 contrast or better.
 - **A warning when colours are too close.** Custom palettes are checked in CIE
   L\*a\*b\* space; if two swatches land within ΔE 18 the settings sheet names the
   pair and offers to switch symbols on. (Grey scale trips this by design — nine
@@ -97,8 +107,10 @@ Colour alone is not enough for everyone, so the palette is only one of the cues:
 - **Shape, not just colour**, for givens versus your own entries.
 
 The board is a `role="grid"` of buttons: every cell is reachable from the
-keyboard, carries a spoken label like "row 4, column 7, colour 3, given", and
-selection follows focus. Light and dark themes both follow the system setting by
+keyboard, carries a spoken label like "row 4, column 7, number 3, given", and
+selection follows focus. Labels name the *number*, never the colour — a colour
+name tells a screen-reader user nothing, and the number stays stable when the
+palette or symbol set changes. Light and dark themes both follow the system setting by
 default, and everything respects `prefers-reduced-motion`.
 
 ![Colour-blind safe palette with numbers, dark theme](docs/screenshot-cvd-dark.png)
@@ -147,7 +159,7 @@ in plain Node.
 npm test
 ```
 
-77 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
+80 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
 the colour maths (contrast, perceptual distance, palette validation), the game
 state machine (undo across notes, win detection, snapshot round-trips), board
 navigation (edge clamping, wrap-around, full boards) and storage (every

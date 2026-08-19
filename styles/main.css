@@ -720,8 +720,35 @@ body {
 
 .actions {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  /* Six across on a phone; two rows of three in the desktop sidebar, which is
+     too narrow to keep the labels readable in one row. */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: clamp(3px, 1vw, 7px);
+}
+
+@media (min-width: 900px) {
+  .actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+}
+
+/* Stands in for an icon on the symbols toggle: it shows the glyph in play. */
+.action-glyph {
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border: 1.5px solid currentColor;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.btn--toggle[aria-pressed='false'] .action-glyph {
+  opacity: 0.55;
+  border-style: dashed;
 }
 
 .btn--action {
@@ -925,7 +952,9 @@ body {
 /* Colour editor */
 .editor {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  /* Wide enough for the swatch, the "Number N" label on one line, the hex
+     field and the swap control without wrapping. */
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
   gap: 0.5rem;
 }
 
@@ -961,6 +990,54 @@ body {
   cursor: pointer;
 }
 
+/* The number, written on its own colour. */
+.editor__stamp {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.editor__swap {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  margin-left: auto;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.editor__swap:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.editor__row.is-swapping {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.editor__row.is-swapping .editor__swap {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-ink);
+}
+
+.editor__row.is-swap-target .editor__swap {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
 .editor__meta {
   display: grid;
   gap: 0.1rem;
@@ -973,6 +1050,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .editor__hex {

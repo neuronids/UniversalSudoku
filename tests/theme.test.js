@@ -87,6 +87,11 @@ test('applyColors writes fill, ring and ink for all nine values', () => {
   assert.equal(written.get('--c1'), theme.findPalette('vibrant').colors[0]);
 });
 
+test('valueLabel names a value by its number, not its colour', () => {
+  assert.equal(theme.valueLabel(1), 'number 1');
+  assert.equal(theme.valueLabel(9), 'number 9');
+});
+
 test('applyTheme only ever sets a known value', () => {
   const root = { dataset: {} };
   globalThis.document = { documentElement: root };

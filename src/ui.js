@@ -7,7 +7,7 @@
 
 import { CELLS, SIZE, boxOf, colOf, rowOf } from './sudoku.js';
 import { notesToValues } from './game.js';
-import { glyphFor } from './theme.js';
+import { glyphFor, valueLabel } from './theme.js';
 
 const el = (tag, className, props = {}) => Object.assign(document.createElement(tag), { className, ...props });
 
@@ -68,10 +68,16 @@ export class BoardView {
    *
    * @param {import('./game.js').Game} game
    * @param {object} settings
+   * @param {{armed: number|null}} [view] the colour armed on the palette, which
+   *        highlights its matches even when no cell is selected
    */
-  render(game, settings) {
+  render(game, settings, { armed = null } = {}) {
     const { selected } = game;
     const selectedValue = selected === null ? 0 : game.grid[selected];
+    // A selected cell that holds a colour wins: it is the more recent, more
+    // specific pointer. Otherwise the armed colour drives the highlight, which
+    // is what makes "press 4 to see every 4" work with nothing selected.
+    const highlightValue = selectedValue || armed || 0;
     const conflicts = settings.showMistakes ? game.conflicts() : new Set();
 
     for (let i = 0; i < CELLS; i++) {
@@ -90,7 +96,7 @@ export class BoardView {
       );
       cell.classList.toggle(
         'is-same',
-        Boolean(settings.highlightSame && selectedValue && value === selectedValue && i !== selected)
+        Boolean(settings.highlightSame && highlightValue && value === highlightValue && i !== selected)
       );
 
       glyph.textContent = value ? glyphFor(settings, value) : '';
@@ -130,12 +136,8 @@ const sharesUnit = (a, b) => rowOf(a) === rowOf(b) || colOf(a) === colOf(b) || b
 
 function describeCell(index, value, marks, given, settings) {
   const where = `row ${rowOf(index) + 1}, column ${colOf(index) + 1}`;
-  if (value) {
-    const symbol = glyphFor(settings, value);
-    const name = symbol ? `colour ${value} “${symbol}”` : `colour ${value}`;
-    return `${where}, ${name}${given ? ', given' : ''}`;
-  }
-  if (marks.length) return `${where}, empty, notes ${marks.join(', ')}`;
+  if (value) return `${where}, ${valueLabel(value)}${given ? ', given' : ''}`;
+  if (marks.length) return `${where}, empty, notes ${marks.map(valueLabel).join(', ')}`;
   return `${where}, empty`;
 }
 
@@ -177,9 +179,9 @@ export class PaletteView {
       button.setAttribute('aria-pressed', active === value ? 'true' : 'false');
       button.setAttribute(
         'aria-label',
-        `Colour ${value}${symbol ? ` (${symbol})` : ''}${settings.showRemaining ? `, ${left} left` : ''}`
+        `${valueLabel(value)}${settings.showRemaining ? `, ${left} left` : ''}`
       );
-      button.title = `Colour ${value} — key ${value}`;
+      button.title = `Number ${value}${symbol ? ` (${symbol})` : ''} — key ${value}`;
     });
   }
 }

@@ -19,6 +19,7 @@ export const DEFAULT_SETTINGS = {
   /** Overrides applied on top of the chosen palette, as `{index: hex}`. */
   overrides: {},
   symbols: 'none', // none | numbers | letters | shapes
+  lastSymbols: 'numbers', // what the symbol toggle turns back on
   theme: 'system', // system | light | dark
   highlightPeers: true, // dim-highlight the row, column and box of the selection
   highlightSame: true, // outline every cell holding the selected colour

@@ -17,7 +17,7 @@ import {
   saveGame,
   saveSettings,
 } from './storage.js';
-import { applyColors, applyTheme, resolveColors } from './theme.js';
+import { applyColors, applyTheme, glyphFor, resolveColors } from './theme.js';
 import { BoardView, PaletteView, formatTime } from './ui.js';
 
 const $ = (id) => document.getElementById(id);
@@ -39,6 +39,8 @@ const refs = {
   erase: $('erase'),
   notes: $('notes'),
   hint: $('hint'),
+  symbolsToggle: $('symbols-toggle'),
+  symbolsGlyph: $('symbols-glyph'),
   status: $('status'),
   veil: $('veil'),
   veilTitle: $('veil-title'),
@@ -97,6 +99,7 @@ const SHORTCUTS = [
       [['N'], 'Pencil marks on or off'],
       [['Z', 'Y'], 'Undo or redo'],
       [['H'], 'Reveal one colour'],
+      [['T'], 'Symbols on or off'],
       [['Esc'], 'Put the current colour down'],
     ],
   },
@@ -126,6 +129,21 @@ function updateSettings(patch) {
   saveSettings(settings);
   applyAppearance();
   render();
+}
+
+/**
+ * Turn symbols on or off.
+ *
+ * Turning them on restores the set last in use rather than always jumping to
+ * numbers, so someone playing with shapes keeps their shapes.
+ */
+function toggleSymbols(on = settings.symbols === 'none') {
+  if (on) {
+    const set = settings.lastSymbols && settings.lastSymbols !== 'none' ? settings.lastSymbols : 'numbers';
+    updateSettings({ symbols: set });
+  } else {
+    updateSettings({ symbols: 'none', lastSymbols: settings.symbols });
+  }
 }
 
 function applyAppearance() {
@@ -158,6 +176,7 @@ const palette = new PaletteView(refs.palette, (value) => pickColor(value));
 const sheet = new SettingsSheet(refs.settings, {
   getSettings: () => settings,
   update: updateSettings,
+  toggleSymbols,
   onReset: () => {
     clearAll();
     settings = loadSettings();
@@ -169,8 +188,15 @@ const sheet = new SettingsSheet(refs.settings, {
 });
 
 function render() {
-  board.render(game, settings);
+  board.render(game, settings, { armed: activeColor });
   palette.render({ active: activeColor, remaining: game.remaining(), settings });
+
+  const symbolsOn = settings.symbols !== 'none';
+  refs.symbolsToggle.setAttribute('aria-pressed', symbolsOn ? 'true' : 'false');
+  refs.symbolsGlyph.textContent = glyphFor(
+    { symbols: symbolsOn ? settings.symbols : settings.lastSymbols || 'numbers' },
+    1
+  );
 
   refs.undo.disabled = game.history.length === 0;
   refs.redo.disabled = game.future.length === 0;
@@ -386,6 +412,11 @@ refs.notes.addEventListener('click', () => {
   render();
 });
 
+refs.symbolsToggle.addEventListener('click', () => {
+  toggleSymbols();
+  say(settings.symbols === 'none' ? 'Symbols off.' : 'Symbols on.');
+});
+
 refs.hint.addEventListener('click', () => {
   const index = game.hint();
   if (index === null) {
@@ -510,6 +541,10 @@ document.addEventListener('keydown', (event) => {
     case 'h':
     case 'H':
       refs.hint.click();
+      break;
+    case 't':
+    case 'T':
+      refs.symbolsToggle.click();
       break;
     case 'p':
     case 'P':

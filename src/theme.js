@@ -60,9 +60,15 @@ export function applyTheme(theme) {
   document.documentElement.dataset.theme = value;
 }
 
-/** Human-readable name for a colour slot, used in labels and screen readers. */
-export function slotName(value) {
-  return `Colour ${value}`;
+/**
+ * How a value is named in labels and to screen readers.
+ *
+ * Always the number, never the colour: a colour name tells a screen-reader user
+ * nothing, while "number 3" identifies the same thing unambiguously and does not
+ * shift when the symbol set changes.
+ */
+export function valueLabel(value) {
+  return `number ${value}`;
 }
 
 export { getPreset };

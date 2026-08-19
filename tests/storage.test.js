@@ -34,6 +34,16 @@ test('settings default when nothing is stored', () => {
   assert.deepEqual(storage.loadSettings(), DEFAULT_SETTINGS);
 });
 
+test('lastSymbols defaults to numbers so the toggle has something to restore', () => {
+  assert.equal(DEFAULT_SETTINGS.lastSymbols, 'numbers');
+  assert.equal(storage.loadSettings().lastSymbols, 'numbers');
+});
+
+test('lastSymbols round-trips', () => {
+  storage.saveSettings({ ...DEFAULT_SETTINGS, symbols: 'none', lastSymbols: 'shapes' });
+  assert.equal(storage.loadSettings().lastSymbols, 'shapes');
+});
+
 test('settings round-trip', () => {
   storage.saveSettings({ ...DEFAULT_SETTINGS, paletteId: 'vibrant', symbols: 'shapes', timer: false });
   const loaded = storage.loadSettings();

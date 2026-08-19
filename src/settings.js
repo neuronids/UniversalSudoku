@@ -21,7 +21,7 @@ const el = (tag, className, props = {}) => Object.assign(document.createElement(
 
 const ASSISTS = [
   { key: 'highlightPeers', title: 'Highlight the row, column and box', desc: 'Shades everything the selected cell can see.' },
-  { key: 'highlightSame', title: 'Highlight the same colour', desc: 'Outlines every cell already holding the selected colour.' },
+  { key: 'highlightSame', title: 'Highlight the same colour', desc: 'Outlines every cell holding the colour you picked or selected.' },
   { key: 'showMistakes', title: 'Flag clashes', desc: 'Marks a colour that repeats in a row, column or box.' },
   { key: 'showRemaining', title: 'Count what is left', desc: 'Shows how many of each colour are still unplaced.' },
   { key: 'autoRemoveNotes', title: 'Tidy pencil marks', desc: 'Clears notes a placement has just ruled out.' },
@@ -37,12 +37,15 @@ const THEMES = [
 export class SettingsSheet {
   /**
    * @param {object} refs DOM nodes from index.html
-   * @param {{getSettings: () => object, update: (patch: object) => void, onReset: () => void}} api
+   * @param {{getSettings: () => object, update: (patch: object) => void,
+ *          toggleSymbols: (on?: boolean) => void, onReset: () => void}} api
    */
   constructor(refs, api) {
     this.refs = refs;
     this.api = api;
     this.hexInputs = [];
+    /** Row armed for a colour swap, or null. */
+    this.swapFrom = null;
     this.#buildEditor();
     this.#buildSegmented(refs.symbols, Object.entries(SYMBOL_SETS).map(([id, s]) => [id, s.label]), 'symbols');
     this.#buildSegmented(refs.theme, THEMES, 'theme');
@@ -55,6 +58,7 @@ export class SettingsSheet {
   }
 
   open() {
+    this.swapFrom = null;
     this.render();
     if (!this.refs.dialog.open) this.refs.dialog.showModal();
   }
@@ -69,19 +73,25 @@ export class SettingsSheet {
 
   #buildEditor() {
     for (let i = 0; i < SWATCH_COUNT; i++) {
+      const number = i + 1;
       const row = el('div', 'editor__row');
+      row.dataset.number = String(number);
 
+      // The colour picker doubles as the preview, with the number written on it
+      // so the mapping is legible even with symbols turned off on the board.
       const swatch = el('label', 'editor__swatch');
       const picker = el('input', '', { type: 'color' });
-      picker.setAttribute('aria-label', `Colour ${i + 1}`);
+      picker.setAttribute('aria-label', `Colour for number ${number}`);
       picker.addEventListener('input', () => this.#setColor(i, picker.value));
-      swatch.append(picker);
+      const stamp = el('span', 'editor__stamp', { textContent: String(number) });
+      stamp.setAttribute('aria-hidden', 'true');
+      swatch.append(picker, stamp);
 
       const meta = el('div', 'editor__meta');
-      meta.append(el('span', 'editor__label', { textContent: `Colour ${i + 1}` }));
+      meta.append(el('span', 'editor__label', { textContent: `Number ${number}` }));
 
       const hex = el('input', 'editor__hex', { type: 'text', spellcheck: false, maxLength: 7 });
-      hex.setAttribute('aria-label', `Colour ${i + 1} hex value`);
+      hex.setAttribute('aria-label', `Colour for number ${number}, hex value`);
       hex.addEventListener('input', () => {
         const value = hex.value.trim();
         const ok = isValidHex(value);
@@ -91,10 +101,36 @@ export class SettingsSheet {
       hex.addEventListener('blur', () => this.render());
       meta.append(hex);
 
-      row.append(swatch, meta);
+      const swap = el('button', 'editor__swap', { type: 'button', textContent: '⇄' });
+      swap.setAttribute('aria-pressed', 'false');
+      swap.addEventListener('click', () => this.#swap(i));
+      row.append(swatch, meta, swap);
+
       this.refs.editor.append(row);
-      this.hexInputs.push({ picker, hex });
+      this.hexInputs.push({ picker, hex, stamp, swap, row });
     }
+  }
+
+  /**
+   * Trade two numbers' colours. The first click arms a row, the second one
+   * completes the trade; clicking the armed row again calls it off.
+   */
+  #swap(index) {
+    if (this.swapFrom === null || this.swapFrom === undefined) {
+      this.swapFrom = index;
+      this.#renderEditor();
+      return;
+    }
+    const from = this.swapFrom;
+    this.swapFrom = null;
+    if (from === index) {
+      this.#renderEditor();
+      return;
+    }
+    const colors = resolveColors(this.settings);
+    [colors[from], colors[index]] = [colors[index], colors[from]];
+    this.api.update({ overrides: Object.fromEntries(colors.map((hex, i) => [i, hex])) });
+    this.render();
   }
 
   #buildSegmented(root, entries, key) {
@@ -218,13 +254,31 @@ export class SettingsSheet {
 
   #renderEditor(skipHex = -1) {
     const colors = resolveColors(this.settings);
-    this.hexInputs.forEach(({ picker, hex }, i) => {
+    const arming = this.swapFrom ?? null;
+
+    this.hexInputs.forEach(({ picker, hex, stamp, swap, row }, i) => {
       picker.value = colors[i];
       if (i !== skipHex) {
         hex.value = colors[i];
         hex.setAttribute('aria-invalid', 'false');
       }
-      hex.style.color = '';
+      // The number sits on the swatch, so it needs the same readable ink the
+      // board uses for that colour.
+      stamp.style.color = readableInk(colors[i]);
+
+      const armed = arming === i;
+      row.classList.toggle('is-swapping', armed);
+      row.classList.toggle('is-swap-target', arming !== null && !armed);
+      swap.setAttribute('aria-pressed', armed ? 'true' : 'false');
+      swap.setAttribute(
+        'aria-label',
+        armed
+          ? `Cancel swapping number ${i + 1}`
+          : arming !== null
+            ? `Swap number ${arming + 1} with number ${i + 1}`
+            : `Swap number ${i + 1} with another number`
+      );
+      swap.title = swap.getAttribute('aria-label');
     });
   }
 
@@ -240,9 +294,9 @@ export class SettingsSheet {
 
     const pairs = close.slice(0, 3).map(({ a, b }) => `${a + 1} and ${b + 1}`).join(', ');
     notice.textContent = `Some colours sit close together (${pairs}). Symbols make them easy to tell apart. `;
-    const fix = el('button', 'linkish', { type: 'button', textContent: 'Turn on numbers' });
+    const fix = el('button', 'linkish', { type: 'button', textContent: 'Turn on symbols' });
     fix.addEventListener('click', () => {
-      this.api.update({ symbols: 'numbers' });
+      this.api.toggleSymbols(true);
       this.render();
     });
     notice.append(fix);
