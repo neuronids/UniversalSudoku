@@ -5,7 +5,8 @@
  */
 
 import { Game } from './game.js';
-import { CELLS, DIFFICULTIES, SIZE, colOf, rowOf } from './sudoku.js';
+import { colEdge, nextEmpty, rowEdge, stepBy } from './navigation.js';
+import { DIFFICULTIES } from './sudoku.js';
 import { SettingsSheet } from './settings.js';
 import {
   clearAll,
@@ -32,6 +33,7 @@ const refs = {
   pause: $('pause'),
   openSettings: $('open-settings'),
   footerSettings: $('footer-settings'),
+  footerShortcuts: $('footer-shortcuts'),
   undo: $('undo'),
   redo: $('redo'),
   erase: $('erase'),
@@ -56,6 +58,10 @@ const refs = {
     shuffleColors: $('shuffle-colors'),
     resetData: $('reset-data'),
   },
+  shortcuts: {
+    dialog: $('shortcuts'),
+    body: $('shortcuts-body'),
+  },
   win: {
     dialog: $('win'),
     ribbon: $('win-ribbon'),
@@ -65,6 +71,44 @@ const refs = {
     close: $('win-close'),
   },
 };
+
+/**
+ * The shortcut list, rendered into the `?` sheet.
+ * `Tab` is deliberately absent from the bindings themselves: the board is one
+ * tab stop with a roving tabindex, so Tab has to keep working as the way out of
+ * the grid to the palette and buttons. `[` and `]` do the empty-cell jumping.
+ */
+const SHORTCUTS = [
+  {
+    title: 'Moving around',
+    rows: [
+      [['↑', '↓', '←', '→'], 'Move one cell'],
+      [['Home', 'End'], 'Start or end of the row'],
+      [['Page Up', 'Page Down'], 'Top or bottom of the column'],
+      [['[', ']'], 'Previous or next empty cell'],
+      [['Tab'], 'Leave the board'],
+    ],
+  },
+  {
+    title: 'Playing',
+    rows: [
+      [['1 – 9'], 'Place that colour'],
+      [['Backspace', 'Delete', '0'], 'Clear the cell'],
+      [['N'], 'Pencil marks on or off'],
+      [['Z', 'Y'], 'Undo or redo'],
+      [['H'], 'Reveal one colour'],
+      [['Esc'], 'Put the current colour down'],
+    ],
+  },
+  {
+    title: 'Everything else',
+    rows: [
+      [['P'], 'Pause'],
+      [['S'], 'Colours and settings'],
+      [['?'], 'This list'],
+    ],
+  },
+];
 
 const game = new Game();
 let settings = loadSettings();
@@ -156,6 +200,46 @@ function renderVeil() {
   }
 }
 
+function openShortcuts() {
+  if (!refs.shortcuts.body.childElementCount) {
+    const wrap = document.createElement('div');
+    wrap.className = 'shortcuts';
+
+    for (const { title, rows } of SHORTCUTS) {
+      const group = document.createElement('section');
+      group.className = 'shortcuts__group';
+
+      const heading = document.createElement('h3');
+      heading.className = 'shortcuts__title';
+      heading.textContent = title;
+      group.append(heading);
+
+      for (const [keys, label] of rows) {
+        const row = document.createElement('div');
+        row.className = 'shortcuts__row';
+
+        const text = document.createElement('span');
+        text.className = 'shortcuts__label';
+        text.textContent = label;
+
+        const keyList = document.createElement('span');
+        keyList.className = 'shortcuts__keys';
+        for (const key of keys) {
+          const kbd = document.createElement('kbd');
+          kbd.textContent = key;
+          keyList.append(kbd);
+        }
+
+        row.append(text, keyList);
+        group.append(row);
+      }
+      wrap.append(group);
+    }
+    refs.shortcuts.body.append(wrap);
+  }
+  if (!refs.shortcuts.dialog.open) refs.shortcuts.dialog.showModal();
+}
+
 function say(message, tone = '') {
   refs.status.textContent = message;
   refs.status.dataset.tone = tone;
@@ -205,13 +289,25 @@ function place(index, value) {
   }
 }
 
+/** Select a cell and put the keyboard on it. */
+function goTo(index) {
+  if (index === null) return;
+  game.select(index);
+  board.focus(index);
+}
+
 function move(dRow, dCol) {
-  const from = game.selected ?? 0;
-  const row = Math.min(SIZE - 1, Math.max(0, rowOf(from) + dRow));
-  const col = Math.min(SIZE - 1, Math.max(0, colOf(from) + dCol));
-  const to = row * SIZE + col;
-  game.select(to);
-  board.focus(to);
+  goTo(stepBy(game.selected ?? 0, dRow, dCol));
+}
+
+/** Jump to the next or previous cell with nothing in it. */
+function jumpToEmpty(step) {
+  const index = nextEmpty(game.grid, game.selected, step);
+  if (index === null) {
+    say('Every cell is filled.');
+    return;
+  }
+  goTo(index);
 }
 
 // ---------------------------------------------------------------------------
@@ -304,6 +400,7 @@ refs.hint.addEventListener('click', () => {
 refs.pause.addEventListener('click', () => (game.paused ? game.resume() : game.pause()));
 refs.veilAction.addEventListener('click', () => game.resume());
 
+refs.footerShortcuts.addEventListener('click', () => openShortcuts());
 refs.openSettings.addEventListener('click', () => sheet.open());
 refs.footerSettings.addEventListener('click', () => sheet.open());
 refs.settings.dialog.addEventListener('close', () => render());
@@ -323,7 +420,7 @@ document.addEventListener('keydown', (event) => {
   const target = event.target;
   const typing = target instanceof HTMLElement && (target.matches('input, select, textarea') || target.isContentEditable);
   if (typing) return;
-  if (refs.settings.dialog.open || refs.win.dialog.open) return;
+  if ([refs.settings.dialog, refs.shortcuts.dialog, refs.win.dialog].some((d) => d.open)) return;
 
   const key = event.key;
 
@@ -363,6 +460,34 @@ document.addEventListener('keydown', (event) => {
     case 'ArrowRight':
       event.preventDefault();
       move(0, 1);
+      break;
+    case 'Home':
+      event.preventDefault();
+      goTo(rowEdge(game.selected ?? 0, 'start'));
+      break;
+    case 'End':
+      event.preventDefault();
+      goTo(rowEdge(game.selected ?? 0, 'end'));
+      break;
+    case 'PageUp':
+      event.preventDefault();
+      goTo(colEdge(game.selected ?? 0, 'start'));
+      break;
+    case 'PageDown':
+      event.preventDefault();
+      goTo(colEdge(game.selected ?? 0, 'end'));
+      break;
+    case '[':
+      event.preventDefault();
+      jumpToEmpty(-1);
+      break;
+    case ']':
+      event.preventDefault();
+      jumpToEmpty(1);
+      break;
+    case '?':
+      event.preventDefault();
+      openShortcuts();
       break;
     case 'Backspace':
     case 'Delete':

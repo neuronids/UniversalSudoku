@@ -33,15 +33,25 @@ relying on colour.
 
 | Key | Does |
 | --- | --- |
+| Arrow keys | Move one cell |
+| `Home` / `End` | Start or end of the row |
+| `Page Up` / `Page Down` | Top or bottom of the column |
+| `[` / `]` | Previous or next empty cell |
+| `Tab` | Leave the board |
 | `1`–`9` | Place that colour in the selected cell |
-| Arrow keys | Move around the board |
 | `Backspace`, `Delete`, `0` | Clear the selected cell |
 | `N` | Pencil marks on or off |
 | `Z` / `Y` | Undo / redo |
 | `H` | Reveal one colour |
 | `P` | Pause |
 | `S` | Open colours & settings |
-| `Esc` | Un-arm the current colour |
+| `?` | The shortcut list |
+| `Esc` | Put the current colour down |
+
+The board follows the ARIA grid pattern: the whole grid is a single tab stop
+with a roving `tabindex`, so `Tab` moves *out* of it to the palette and buttons
+rather than between cells. `[` and `]` do the jumping between empty cells that
+`Tab` handles in some other sudoku apps.
 
 Pencil marks show as small dots, one per possible colour. Placing a colour
 clears that mark from every cell in the same row, column and box.
@@ -119,6 +129,7 @@ src/sudoku.js           generation, solving, difficulty rating, validation
 src/palettes.js         presets, colour maths, perceptual distance
 src/game.js             board state, pencil marks, undo, timer, win detection
 src/storage.js          localStorage, defensive on every read
+src/navigation.js       board movement maths: edges, wrap-around, empty cells
 src/theme.js            settings -> CSS custom properties
 src/ui.js               board and palette rendering
 src/settings.js         the colours & settings sheet
@@ -126,8 +137,9 @@ src/app.js              wiring, keyboard, persistence
 tests/                  node:test suites
 ```
 
-`src/sudoku.js`, `src/palettes.js`, `src/game.js` and `src/storage.js` have no
-DOM dependencies, which is what makes them testable in plain Node.
+`src/sudoku.js`, `src/palettes.js`, `src/game.js`, `src/storage.js` and
+`src/navigation.js` have no DOM dependencies, which is what makes them testable
+in plain Node.
 
 ## Tests
 
@@ -135,10 +147,11 @@ DOM dependencies, which is what makes them testable in plain Node.
 npm test
 ```
 
-66 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
+77 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
 the colour maths (contrast, perceptual distance, palette validation), the game
-state machine (undo across notes, win detection, snapshot round-trips) and
-storage (every corrupt-input path).
+state machine (undo across notes, win detection, snapshot round-trips), board
+navigation (edge clamping, wrap-around, full boards) and storage (every
+corrupt-input path).
 
 ## Deploying
 

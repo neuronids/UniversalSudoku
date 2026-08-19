@@ -107,8 +107,9 @@
             </div>
           </div>
           <p class="visually-hidden" id="board-help">
-            Choose a colour from the palette, then a cell. Arrow keys move, 1 to 9 place a colour,
-            Backspace clears, N toggles notes.
+            Choose a colour from the palette, then a cell. Arrow keys move, Home and End jump to the
+            ends of the row, square brackets jump to the next empty cell, 1 to 9 place a colour,
+            Backspace clears, N toggles notes. Press question mark for the full list.
           </p>
         </section>
 
@@ -200,7 +201,8 @@
       <footer class="footer">
         <p>
           Colours, not numbers. Change the palette any time from
-          <button type="button" class="linkish" id="footer-settings">colours &amp; settings</button>.
+          <button type="button" class="linkish" id="footer-settings">colours &amp; settings</button>,
+          or see the <button type="button" class="linkish" id="footer-shortcuts">keyboard shortcuts</button>.
         </p>
       </footer>
     </div>
@@ -262,6 +264,19 @@
           </div>
         </section>
       </div>
+    </dialog>
+
+    <!-- Keyboard shortcuts --------------------------------------------------->
+    <dialog class="sheet sheet--narrow" id="shortcuts">
+      <form method="dialog" class="sheet__head">
+        <h2>Keyboard shortcuts</h2>
+        <button class="btn btn--icon" value="close" aria-label="Close the shortcut list">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="icon">
+            <path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </form>
+      <div class="sheet__body" id="shortcuts-body"></div>
     </dialog>
 
     <!-- Win ----------------------------------------------------------------->

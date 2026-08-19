@@ -1202,6 +1202,77 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   Keyboard shortcuts sheet
+   -------------------------------------------------------------------------- */
+
+.sheet--narrow {
+  width: min(100% - 1.5rem, 520px);
+}
+
+.shortcuts {
+  display: grid;
+  gap: 1.3rem;
+}
+
+.shortcuts__group {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.shortcuts__title {
+  margin: 0 0 0.35rem;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.shortcuts__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.42rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.shortcuts__group .shortcuts__row:last-child {
+  border-bottom: 0;
+}
+
+.shortcuts__label {
+  font-size: 0.88rem;
+}
+
+.shortcuts__keys {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.9em;
+  padding: 0.16em 0.45em;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgb(15 20 40 / 0.04);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+  white-space: nowrap;
+}
+
+
+/* --------------------------------------------------------------------------
    The nine playing colours
    One block per value so the board repaints by changing a single attribute.
    -------------------------------------------------------------------------- */
