@@ -1,0 +1,185 @@
+/**
+ * Board and control rendering.
+ *
+ * The 81 cells and 9 swatches are built once, then updated in place, so a
+ * repaint never disturbs focus or the caret in the settings sheet.
+ */
+
+import { CELLS, SIZE, boxOf, colOf, rowOf } from './sudoku.js';
+import { notesToValues } from './game.js';
+import { glyphFor } from './theme.js';
+
+const el = (tag, className, props = {}) => Object.assign(document.createElement(tag), { className, ...props });
+
+export function formatTime(seconds) {
+  const total = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const mm = h ? String(m).padStart(2, '0') : String(m);
+  return `${h ? `${h}:` : ''}${mm}:${String(s).padStart(2, '0')}`;
+}
+
+export class BoardView {
+  /**
+   * @param {HTMLElement} root the `.board` grid
+   * @param {{onSelect: (index: number) => void, onActivate: (index: number) => void}} handlers
+   */
+  constructor(root, handlers) {
+    this.root = root;
+    this.handlers = handlers;
+    this.cells = [];
+    this.#build();
+  }
+
+  #build() {
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < CELLS; i++) {
+      const cell = el('button', 'cell', { type: 'button' });
+      cell.dataset.index = String(i);
+      cell.setAttribute('role', 'gridcell');
+      // Cells are reachable as one tab stop; arrow keys move between them.
+      cell.tabIndex = i === 0 ? 0 : -1;
+
+      cell.append(el('span', 'cell__fill'));
+      const glyph = el('span', 'cell__glyph');
+      cell.append(glyph);
+
+      const notes = el('span', 'cell__notes');
+      for (let v = 1; v <= SIZE; v++) {
+        const pip = document.createElement('i');
+        pip.dataset.v = String(v);
+        notes.append(pip);
+      }
+      cell.append(notes);
+
+      cell.addEventListener('click', () => this.handlers.onActivate(i));
+      // Keep selection and focus together, so tabbing or scripted focus moves
+      // the highlight too.
+      cell.addEventListener('focus', () => this.handlers.onSelect(i));
+      fragment.append(cell);
+      this.cells.push({ cell, glyph, notes: [...notes.children] });
+    }
+    this.root.append(fragment);
+  }
+
+  /**
+   * Repaint every cell from the current game state.
+   *
+   * @param {import('./game.js').Game} game
+   * @param {object} settings
+   */
+  render(game, settings) {
+    const { selected } = game;
+    const selectedValue = selected === null ? 0 : game.grid[selected];
+    const conflicts = settings.showMistakes ? game.conflicts() : new Set();
+
+    for (let i = 0; i < CELLS; i++) {
+      const { cell, glyph, notes } = this.cells[i];
+      const value = game.grid[i];
+
+      if (value) cell.dataset.value = String(value);
+      else delete cell.dataset.value;
+
+      cell.classList.toggle('is-given', game.isGiven(i));
+      cell.classList.toggle('is-selected', i === selected);
+      cell.classList.toggle('is-conflict', conflicts.has(i));
+      cell.classList.toggle(
+        'is-peer',
+        Boolean(settings.highlightPeers && selected !== null && i !== selected && sharesUnit(i, selected))
+      );
+      cell.classList.toggle(
+        'is-same',
+        Boolean(settings.highlightSame && selectedValue && value === selectedValue && i !== selected)
+      );
+
+      glyph.textContent = value ? glyphFor(settings, value) : '';
+
+      const marks = value ? [] : notesToValues(game.notes[i]);
+      for (let v = 1; v <= SIZE; v++) {
+        const pip = notes[v - 1];
+        if (marks.includes(v)) pip.dataset.on = '';
+        else delete pip.dataset.on;
+      }
+
+      // Givens stay clickable — selecting one highlights every matching colour —
+      // so they are described as given rather than marked disabled.
+      cell.setAttribute('aria-label', describeCell(i, value, marks, game.isGiven(i), settings));
+      cell.tabIndex = i === (selected ?? 0) ? 0 : -1;
+    }
+  }
+
+  /** Move keyboard focus to a cell without scrolling the page around. */
+  focus(index) {
+    const entry = this.cells[index];
+    if (entry) entry.cell.focus({ preventScroll: true });
+  }
+
+  /** Briefly animate a cell, used when a hint lands. */
+  flash(index) {
+    const entry = this.cells[index];
+    if (!entry) return;
+    entry.cell.classList.remove('is-hint');
+    void entry.cell.offsetWidth; // restart the animation
+    entry.cell.classList.add('is-hint');
+    setTimeout(() => entry.cell.classList.remove('is-hint'), 600);
+  }
+}
+
+const sharesUnit = (a, b) => rowOf(a) === rowOf(b) || colOf(a) === colOf(b) || boxOf(a) === boxOf(b);
+
+function describeCell(index, value, marks, given, settings) {
+  const where = `row ${rowOf(index) + 1}, column ${colOf(index) + 1}`;
+  if (value) {
+    const symbol = glyphFor(settings, value);
+    const name = symbol ? `colour ${value} “${symbol}”` : `colour ${value}`;
+    return `${where}, ${name}${given ? ', given' : ''}`;
+  }
+  if (marks.length) return `${where}, empty, notes ${marks.join(', ')}`;
+  return `${where}, empty`;
+}
+
+export class PaletteView {
+  /**
+   * @param {HTMLElement} root the `.palette` toolbar
+   * @param {(value: number) => void} onPick
+   */
+  constructor(root, onPick) {
+    this.root = root;
+    this.buttons = [];
+    for (let v = 1; v <= SIZE; v++) {
+      const button = el('button', 'swatch', { type: 'button' });
+      button.dataset.value = String(v);
+      button.setAttribute('aria-pressed', 'false');
+      button.append(el('span', 'swatch__glyph'));
+      button.append(el('span', 'swatch__count'));
+      button.addEventListener('click', () => onPick(v));
+      root.append(button);
+      this.buttons.push(button);
+    }
+  }
+
+  /**
+   * @param {object} options
+   * @param {number|null} options.active currently armed colour
+   * @param {number[]} options.remaining how many of each value are unplaced
+   * @param {object} options.settings
+   */
+  render({ active, remaining, settings }) {
+    this.buttons.forEach((button, i) => {
+      const value = i + 1;
+      const left = remaining[value] ?? 0;
+      const symbol = glyphFor(settings, value);
+      button.querySelector('.swatch__glyph').textContent = symbol;
+      const count = button.querySelector('.swatch__count');
+      count.textContent = settings.showRemaining && left > 0 ? String(left) : '';
+      button.classList.toggle('is-done', left <= 0);
+      button.setAttribute('aria-pressed', active === value ? 'true' : 'false');
+      button.setAttribute(
+        'aria-label',
+        `Colour ${value}${symbol ? ` (${symbol})` : ''}${settings.showRemaining ? `, ${left} left` : ''}`
+      );
+      button.title = `Colour ${value} — key ${value}`;
+    });
+  }
+}

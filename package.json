@@ -1,0 +1,16 @@
+{
+  "name": "sudoku-color",
+  "version": "1.0.0",
+  "description": "Sudoku played with colours instead of numbers, with palettes you can change.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": ["sudoku", "colour", "color", "accessibility", "colour-blind", "game"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

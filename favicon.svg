@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sudoku Color">
+  <rect width="64" height="64" rx="14" fill="#20242e" />
+  <g>
+    <rect x="10" y="10" width="13" height="13" rx="3" fill="#e0858e" />
+    <rect x="25.5" y="10" width="13" height="13" rx="3" fill="#e0de85" />
+    <rect x="41" y="10" width="13" height="13" rx="3" fill="#8ae187" />
+    <rect x="10" y="25.5" width="13" height="13" rx="3" fill="#9ad8c0" />
+    <rect x="25.5" y="25.5" width="13" height="13" rx="3" fill="#87bde1" />
+    <rect x="41" y="25.5" width="13" height="13" rx="3" fill="#858ce0" />
+    <rect x="10" y="41" width="13" height="13" rx="3" fill="#e085de" />
+    <rect x="25.5" y="41" width="13" height="13" rx="3" fill="#edc2eb" />
+    <rect x="41" y="41" width="13" height="13" rx="3" fill="#e0c2a9" />
+  </g>
+</svg>
