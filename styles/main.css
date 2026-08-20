@@ -291,6 +291,7 @@ body {
 
 .btn--icon {
   width: 42px;
+  flex: none;
   padding: 0;
 }
 
@@ -324,6 +325,12 @@ body {
   font: inherit;
   text-decoration: underline;
   cursor: pointer;
+}
+
+/* Meta buttons stay together as a unit when the toolbar wraps on a phone. */
+.topbar__icons {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .timer {
@@ -1240,6 +1247,43 @@ body {
    Small screens
    -------------------------------------------------------------------------- */
 
+/*
+ * Below this the toolbar can no longer hold difficulty, New game, the clock and
+ * three icons on one line. Squeezing them onto one row collapses New game under
+ * the select, so lay the pairs out as an explicit two-row grid instead.
+ */
+@media (max-width: 560px) {
+  .topbar__tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .topbar__tools .field {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .topbar__tools .btn--primary {
+    grid-column: 2;
+  }
+
+  .timer {
+    grid-column: 1;
+  }
+
+  .topbar__icons {
+    grid-column: 2;
+    justify-content: flex-end;
+  }
+
+  .select {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 @media (max-width: 420px) {
   :root {
     --board-band: 2px;
@@ -1247,15 +1291,8 @@ body {
     --seam: 2px;
   }
 
-  /* Keep difficulty, new game, the clock and settings on one row. */
-  .topbar__tools {
-    flex-wrap: nowrap;
-    width: 100%;
-  }
-
   .topbar__tools .select,
   .topbar__tools .btn {
-    min-width: 0;
     padding: 0 0.55rem;
     font-size: 0.86rem;
   }
@@ -1265,11 +1302,6 @@ body {
     background-position: calc(100% - 0.8rem) 55%, calc(100% - 0.45rem) 55%;
   }
 
-  .topbar__tools .btn--icon {
-    width: 40px;
-    padding: 0;
-  }
-
   .timer {
     padding: 0 0.5rem 0 0.2rem;
   }
@@ -1277,6 +1309,32 @@ body {
   .btn--action span {
     font-size: 0.66rem;
   }
+}
+
+/* --------------------------------------------------------------------------
+   Share sheet
+   -------------------------------------------------------------------------- */
+
+.share {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.share__link {
+  flex: 1;
+  min-width: 0;
+  padding: 0 0.7rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+}
+
+.share__link:focus-visible {
+  border-color: var(--accent);
 }
 
 /* --------------------------------------------------------------------------

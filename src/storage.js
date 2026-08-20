@@ -6,12 +6,12 @@
 
 import { DEFAULT_PALETTE_ID, SWATCH_COUNT, getPreset, sanitizeColors, isValidHex, normalizeHex } from './palettes.js';
 
-const PREFIX = 'sudoku-color:';
+const STORAGE_PREFIX = 'sudoku-color:';
 const KEYS = {
-  settings: PREFIX + 'settings',
-  game: PREFIX + 'game',
-  stats: PREFIX + 'stats',
-  customPalettes: PREFIX + 'custom-palettes',
+  settings: STORAGE_PREFIX + 'settings',
+  game: STORAGE_PREFIX + 'game',
+  stats: STORAGE_PREFIX + 'stats',
+  customPalettes: STORAGE_PREFIX + 'custom-palettes',
 };
 
 export const DEFAULT_SETTINGS = {
@@ -31,7 +31,7 @@ export const DEFAULT_SETTINGS = {
 
 const canStore = (() => {
   try {
-    const probe = PREFIX + 'probe';
+    const probe = STORAGE_PREFIX + 'probe';
     localStorage.setItem(probe, '1');
     localStorage.removeItem(probe);
     return true;

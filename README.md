@@ -62,6 +62,22 @@ already holds it, so you can sweep the board for one colour without having to
 find a cell containing it first. Selecting a cell that holds a colour highlights
 that one instead.
 
+### Sending a puzzle to someone
+
+The generator is deterministic — the same difficulty and seed always build the
+same board — so a puzzle travels as nothing more than a link:
+
+```
+https://…/index.html#puzzle=medium-2121049817
+```
+
+Press the share button in the toolbar and you get that link for the board you
+are on. Whoever opens it plays the identical puzzle, with their own colours and
+their own clock; nothing is uploaded and there is no server involved. Reopening
+your own link picks up where you left off rather than restarting, and starting a
+new game drops the link from the address bar. An unreadable or hand-edited
+fragment just starts an ordinary game.
+
 Your board, palette and best times are kept in `localStorage`, so closing the
 tab does not lose the game. In a browser that blocks storage the app still runs,
 it just forgets between sessions.
@@ -142,6 +158,7 @@ src/palettes.js         presets, colour maths, perceptual distance
 src/game.js             board state, pencil marks, undo, timer, win detection
 src/storage.js          localStorage, defensive on every read
 src/navigation.js       board movement maths: edges, wrap-around, empty cells
+src/share.js            puzzle links: formatting and parsing the URL fragment
 src/theme.js            settings -> CSS custom properties
 src/ui.js               board and palette rendering
 src/settings.js         the colours & settings sheet
@@ -149,9 +166,9 @@ src/app.js              wiring, keyboard, persistence
 tests/                  node:test suites
 ```
 
-`src/sudoku.js`, `src/palettes.js`, `src/game.js`, `src/storage.js` and
-`src/navigation.js` have no DOM dependencies, which is what makes them testable
-in plain Node.
+`src/sudoku.js`, `src/palettes.js`, `src/game.js`, `src/storage.js`,
+`src/navigation.js` and `src/share.js` have no DOM dependencies, which is what
+makes them testable in plain Node.
 
 ## Tests
 
@@ -159,11 +176,11 @@ in plain Node.
 npm test
 ```
 
-80 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
+89 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
 the colour maths (contrast, perceptual distance, palette validation), the game
 state machine (undo across notes, win detection, snapshot round-trips), board
-navigation (edge clamping, wrap-around, full boards) and storage (every
-corrupt-input path).
+navigation (edge clamping, wrap-around, full boards), puzzle links (round-trips
+and every malformed fragment) and storage (every corrupt-input path).
 
 ## Deploying
 

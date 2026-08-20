@@ -61,13 +61,52 @@
             <output class="timer__value" id="timer" aria-live="off">0:00</output>
           </div>
 
-          <button
-            type="button"
-            class="btn btn--icon"
-            id="open-settings"
-            title="Colours &amp; settings (S)"
-            aria-label="Colours and settings"
-          >
+          <div class="topbar__icons">
+            <button
+              type="button"
+              class="btn btn--icon"
+              id="share"
+              title="Share this puzzle"
+              aria-label="Share this puzzle"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="icon">
+                <path
+                  d="M12 3v12M12 3 8 7m4-4 4 4M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.9"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              class="btn btn--icon"
+              id="open-shortcuts"
+              title="Keyboard shortcuts (?)"
+              aria-label="Keyboard shortcuts"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="icon">
+                <rect x="2.5" y="6" width="19" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7" />
+                <path
+                  d="M6 9.5h.01M9 9.5h.01M12 9.5h.01M15 9.5h.01M18 9.5h.01M6 12.5h.01M9 12.5h.01M12 12.5h.01M15 12.5h.01M18 12.5h.01M8 15.5h8"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.9"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              class="btn btn--icon"
+              id="open-settings"
+              title="Colours &amp; settings (S)"
+              aria-label="Colours and settings"
+            >
             <svg viewBox="0 0 24 24" aria-hidden="true" class="icon">
               <path
                 d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
@@ -83,7 +122,8 @@
                 stroke-linejoin="round"
               />
             </svg>
-          </button>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -212,8 +252,7 @@
       <footer class="footer">
         <p>
           Colours, not numbers. Change the palette any time from
-          <button type="button" class="linkish" id="footer-settings">colours &amp; settings</button>,
-          or see the <button type="button" class="linkish" id="footer-shortcuts">keyboard shortcuts</button>.
+          <button type="button" class="linkish" id="footer-settings">colours &amp; settings</button>.
         </p>
       </footer>
     </div>
@@ -277,6 +316,33 @@
       </div>
     </dialog>
 
+    <!-- Share ---------------------------------------------------------------->
+    <dialog class="sheet sheet--small" id="share-sheet">
+      <form method="dialog" class="sheet__head">
+        <h2>Share this puzzle</h2>
+        <button class="btn btn--icon" value="close" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="icon">
+            <path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </form>
+
+      <div class="sheet__body">
+        <p class="panel__hint" id="share-blurb">
+          Anyone who opens this link gets the very same board. Their colours and their progress stay
+          their own — only the puzzle travels.
+        </p>
+
+        <div class="share">
+          <label class="visually-hidden" for="share-link">Link to this puzzle</label>
+          <input class="share__link" id="share-link" type="text" readonly spellcheck="false" />
+          <button type="button" class="btn btn--primary" id="share-copy">Copy</button>
+        </div>
+
+        <p class="status" id="share-status" role="status" aria-live="polite"></p>
+      </div>
+    </dialog>
+
     <!-- Keyboard shortcuts --------------------------------------------------->
     <dialog class="sheet sheet--narrow" id="shortcuts">
       <form method="dialog" class="sheet__head">
@@ -298,6 +364,7 @@
         <p class="win__stats" id="win-stats"></p>
         <div class="panel__row panel__row--center">
           <button type="button" class="btn btn--primary" id="win-again">Play again</button>
+          <button type="button" class="btn" id="win-share">Challenge a friend</button>
           <button type="button" class="btn" id="win-close">Look at the board</button>
         </div>
       </div>

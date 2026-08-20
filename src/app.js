@@ -6,6 +6,7 @@
 
 import { Game } from './game.js';
 import { colEdge, nextEmpty, rowEdge, stepBy } from './navigation.js';
+import { formatPuzzleLink, matchesPuzzle, parsePuzzleHash } from './share.js';
 import { DIFFICULTIES } from './sudoku.js';
 import { SettingsSheet } from './settings.js';
 import {
@@ -32,8 +33,9 @@ const refs = {
   timer: $('timer'),
   pause: $('pause'),
   openSettings: $('open-settings'),
+  openShortcuts: $('open-shortcuts'),
+  share: $('share'),
   footerSettings: $('footer-settings'),
-  footerShortcuts: $('footer-shortcuts'),
   undo: $('undo'),
   redo: $('redo'),
   erase: $('erase'),
@@ -64,12 +66,19 @@ const refs = {
     dialog: $('shortcuts'),
     body: $('shortcuts-body'),
   },
+  shareSheet: {
+    dialog: $('share-sheet'),
+    link: $('share-link'),
+    copy: $('share-copy'),
+    status: $('share-status'),
+  },
   win: {
     dialog: $('win'),
     ribbon: $('win-ribbon'),
     title: $('win-title'),
     stats: $('win-stats'),
     again: $('win-again'),
+    share: $('win-share'),
     close: $('win-close'),
   },
 };
@@ -226,6 +235,49 @@ function renderVeil() {
   }
 }
 
+/**
+ * Put the current puzzle's link on screen.
+ *
+ * The link is shown in a selectable field as well as copied, because the
+ * clipboard API is unavailable in some embedded and non-secure contexts — the
+ * dialog has to stay useful when the copy silently fails.
+ */
+function openShare() {
+  const link = formatPuzzleLink(location.href, { difficulty: game.difficulty, seed: game.seed });
+  refs.shareSheet.link.value = link;
+  refs.shareSheet.status.textContent = '';
+  refs.shareSheet.status.dataset.tone = '';
+  if (!refs.shareSheet.dialog.open) refs.shareSheet.dialog.showModal();
+  refs.shareSheet.link.select();
+}
+
+async function copyShareLink() {
+  const { link, status } = refs.shareSheet;
+  link.select();
+  try {
+    await navigator.clipboard.writeText(link.value);
+    status.textContent = 'Link copied.';
+    status.dataset.tone = 'good';
+  } catch {
+    status.textContent = 'Copying is blocked here — the link is selected, so copy it yourself.';
+    status.dataset.tone = 'danger';
+  }
+}
+
+/** Start the puzzle a link points at, resuming it if it is already in progress. */
+function openSharedPuzzle(puzzle) {
+  const saved = loadGame();
+  if (matchesPuzzle(saved, puzzle) && game.restore(saved)) {
+    refs.difficulty.value = game.difficulty;
+    say('Back on the shared puzzle.');
+    return;
+  }
+  game.newGame(puzzle.difficulty, puzzle.seed);
+  activeColor = null;
+  refs.difficulty.value = game.difficulty;
+  say('Shared puzzle — same board as whoever sent it.');
+}
+
 function openShortcuts() {
   if (!refs.shortcuts.body.childElementCount) {
     const wrap = document.createElement('div');
@@ -357,6 +409,9 @@ function startGame(difficulty, { force = false } = {}) {
     setTimeout(() => {
       game.newGame(difficulty);
       activeColor = null;
+      // This is no longer the puzzle the link points at; replaceState keeps it
+      // out of history and fires no hashchange.
+      if (location.hash) history.replaceState(null, '', location.pathname + location.search);
       refs.difficulty.value = game.difficulty;
       refs.newGame.disabled = false;
       say('');
@@ -431,7 +486,9 @@ refs.hint.addEventListener('click', () => {
 refs.pause.addEventListener('click', () => (game.paused ? game.resume() : game.pause()));
 refs.veilAction.addEventListener('click', () => game.resume());
 
-refs.footerShortcuts.addEventListener('click', () => openShortcuts());
+refs.openShortcuts.addEventListener('click', () => openShortcuts());
+refs.share.addEventListener('click', () => openShare());
+refs.shareSheet.copy.addEventListener('click', () => copyShareLink());
 refs.openSettings.addEventListener('click', () => sheet.open());
 refs.footerSettings.addEventListener('click', () => sheet.open());
 refs.settings.dialog.addEventListener('close', () => render());
@@ -439,6 +496,10 @@ refs.settings.dialog.addEventListener('close', () => render());
 refs.win.again.addEventListener('click', () => {
   refs.win.dialog.close();
   startGame(refs.difficulty.value, { force: true });
+});
+refs.win.share.addEventListener('click', () => {
+  refs.win.dialog.close();
+  openShare();
 });
 refs.win.close.addEventListener('click', () => refs.win.dialog.close());
 
@@ -451,7 +512,7 @@ document.addEventListener('keydown', (event) => {
   const target = event.target;
   const typing = target instanceof HTMLElement && (target.matches('input, select, textarea') || target.isContentEditable);
   if (typing) return;
-  if ([refs.settings.dialog, refs.shortcuts.dialog, refs.win.dialog].some((d) => d.open)) return;
+  if ([refs.settings.dialog, refs.shortcuts.dialog, refs.shareSheet.dialog, refs.win.dialog].some((d) => d.open)) return;
 
   const key = event.key;
 
@@ -565,6 +626,15 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
+// A link pasted into the address bar of an open tab changes the hash without
+// reloading, so the puzzle has to be picked up here too.
+window.addEventListener('hashchange', () => {
+  const puzzle = parsePuzzleHash(location.hash);
+  if (!puzzle) return;
+  if (puzzle.seed === game.seed && puzzle.difficulty === game.difficulty) return;
+  openSharedPuzzle(puzzle);
+});
+
 // Pause the clock when the tab goes away, so a stopped game is not "played".
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && !game.finished && !game.paused) game.pause();
@@ -580,7 +650,10 @@ window.addEventListener('beforeunload', () => {
 
 applyAppearance();
 
-if (!game.restore(loadGame())) {
+const sharedPuzzle = parsePuzzleHash(location.hash);
+if (sharedPuzzle) {
+  openSharedPuzzle(sharedPuzzle);
+} else if (!game.restore(loadGame())) {
   game.newGame(refs.difficulty.value);
 } else {
   refs.difficulty.value = game.difficulty;
