@@ -151,11 +151,12 @@ Colour alone is not enough for everyone, so the palette is only one of the cues:
   whichever separates further. A white swatch still reads as filled.
 - **Clashes marked twice over**: a red ring *and* a diagonal hatch drawn in the
   cell's own ink, so the warning does not depend on seeing red.
-- **"Tell me when it's wrong."** Flagging clashes only catches a colour that
-  repeats in a row, column or box. Switch this on and anything that disagrees
-  with the solution is marked the same way, clash or no clash, so a wrong colour
-  cannot sit quietly on the board for twenty minutes. `C` asks the same question
-  once, without leaving the marks on.
+- **"Tell me when it's wrong."** On by default. Flagging clashes only catches a
+  colour that repeats in a row, column or box; this one compares against the
+  solution, so anything wrong is marked and named the moment you put it down,
+  clash or no clash, and a wrong colour cannot sit quietly on the board for
+  twenty minutes. Switch it off for an unassisted game. `C` asks the same
+  question once, without leaving the marks on.
 
 The board is a `role="grid"` of buttons: every cell is reachable from the
 keyboard, carries a spoken label like "row 4, column 7, number 3, given", and

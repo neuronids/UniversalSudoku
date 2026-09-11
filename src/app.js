@@ -436,10 +436,13 @@ function pickColor(value) {
 
 function place(index, value) {
   game.setValue(index, value, { autoRemoveNotes: settings.autoRemoveNotes });
-  // Only report what the board is already showing. Comparing against the
-  // solution here would quietly give away wrong answers the "flag clashes"
-  // assist never promised to reveal.
-  if (settings.showMistakes && game.conflicts().has(index)) {
+  // Each assist reports only what it promised. "Tell me when it's wrong" is the
+  // one that compares against the solution, so it is also the only one that can
+  // speak up for a wrong colour that clashes with nothing; flagging clashes on
+  // its own must not quietly give that away.
+  if (settings.tellMeWrong && game.grid[index] !== game.solution[index]) {
+    say('That one is wrong.', 'danger');
+  } else if (settings.showMistakes && game.conflicts().has(index)) {
     say('That colour clashes here.', 'danger');
   }
 }

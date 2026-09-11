@@ -27,7 +27,7 @@ export const DEFAULT_SETTINGS = {
   highlightPeers: true, // dim-highlight the row, column and box of the selection
   highlightSame: true, // outline every cell holding the selected colour
   showMistakes: true, // flag values that clash with the row/column/box
-  tellMeWrong: false, // flag anything that disagrees with the solution, clash or not
+  tellMeWrong: true, // flag anything that disagrees with the solution, clash or not
   showRemaining: true, // show how many of each colour are still unplaced
   autoRemoveNotes: true, // clear pencil marks a placement rules out
   timer: true,

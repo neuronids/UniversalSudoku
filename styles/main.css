@@ -30,13 +30,13 @@
   --cell-peer: #ececee;
   --cell-selected: #dfe3ee;
   --grid-line: #d6d6d9;
-  --grid-strong: #9c9ca2;
+  --grid-strong: #5f6066;
   --shadow-1: 0 1px 2px rgb(20 20 24 / 0.05), 0 8px 24px rgb(20 20 24 / 0.06);
   --shadow-2: 0 18px 50px rgb(20 20 24 / 0.2);
   --radius: 14px;
   --radius-sm: 9px;
   --grid-hair: 1px;
-  --grid-band: 2px;
+  --grid-band: 3px;
 
   color-scheme: light;
 }
@@ -61,7 +61,7 @@
     --cell-peer: #2e2e32;
     --cell-selected: #3a3f4f;
     --grid-line: #44444b;
-    --grid-strong: #8d8d97;
+    --grid-strong: #adadb8;
     --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 28px rgb(0 0 0 / 0.35);
     --shadow-2: 0 22px 60px rgb(0 0 0 / 0.6);
 
@@ -88,7 +88,7 @@
   --cell-peer: #2e2e32;
   --cell-selected: #3a3f4f;
   --grid-line: #44444b;
-  --grid-strong: #8d8d97;
+  --grid-strong: #adadb8;
   --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 28px rgb(0 0 0 / 0.35);
   --shadow-2: 0 22px 60px rgb(0 0 0 / 0.6);
 
@@ -1377,10 +1377,6 @@ body {
 }
 
 @media (max-width: 420px) {
-  :root {
-    --grid-band: 2px;
-  }
-
   .topbar__tools .select,
   .topbar__tools .btn {
     padding: 0 0.55rem;
