@@ -146,10 +146,12 @@
               </div>
             </div>
           </div>
+          <p class="shortcut-bar" id="shortcut-bar"></p>
+
           <p class="visually-hidden" id="board-help">
-            Choose a colour from the palette, then a cell. Arrow keys move, Home and End jump to the
-            ends of the row, square brackets jump to the next empty cell, 1 to 9 place a colour,
-            Backspace clears, N toggles notes. Press question mark for the full list.
+            Choose a colour from the palette, then a cell. The arrow keys move, 1 to 9 place a
+            colour and Backspace clears. The rest of the shortcuts are listed under the board, and
+            every one of them can be moved to a different key from the settings sheet.
           </p>
         </section>
 
@@ -288,6 +290,15 @@
         </section>
 
         <section class="panel">
+          <h3 class="panel__title">How a cell is drawn</h3>
+          <p class="panel__hint">
+            Flood the cell with its colour, or draw the post-it shape that belongs to it.
+          </p>
+          <div class="segmented" id="cell-style" role="radiogroup" aria-label="How a cell is drawn"></div>
+          <div class="switches" id="colour-switches"></div>
+        </section>
+
+        <section class="panel">
           <h3 class="panel__title">Symbols on the colours</h3>
           <p class="panel__hint">
             A second cue on every cell. Helpful with the grey scale palette, or any time colours alone
@@ -304,6 +315,18 @@
         <section class="panel">
           <h3 class="panel__title">Assists</h3>
           <div class="switches" id="switches"></div>
+        </section>
+
+        <section class="panel">
+          <h3 class="panel__title">Keyboard shortcuts</h3>
+          <p class="panel__hint">
+            Pick a shortcut, then press the key you want it on. The digits 1 to 9 always place a
+            colour.
+          </p>
+          <div class="keys" id="keys"></div>
+          <div class="panel__row">
+            <button type="button" class="btn" id="reset-keys">Reset shortcuts</button>
+          </div>
         </section>
 
         <section class="panel">
@@ -354,6 +377,18 @@
         </button>
       </form>
       <div class="sheet__body" id="shortcuts-body"></div>
+    </dialog>
+
+    <!-- Confirm -------------------------------------------------------------->
+    <dialog class="sheet sheet--small" id="confirm">
+      <div class="confirm">
+        <h2 class="confirm__title" id="confirm-title">Start a new board?</h2>
+        <p class="confirm__text" id="confirm-text">The one in progress will be lost.</p>
+        <div class="panel__row panel__row--center">
+          <button type="button" class="btn btn--primary" id="confirm-ok">Start a new board</button>
+          <button type="button" class="btn" id="confirm-cancel">Keep playing</button>
+        </div>
+      </div>
     </dialog>
 
     <!-- Win ----------------------------------------------------------------->

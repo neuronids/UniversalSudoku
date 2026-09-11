@@ -27,9 +27,9 @@ first and then a colour. Tapping a cell that already holds the armed colour
 clears it again. Each colour goes once per row, once per column and once per box,
 exactly as with digits.
 
-Cells that came with the puzzle fill edge to edge. Your own entries sit in a
-rounded square inside the cell, so you can always tell the two apart without
-relying on colour.
+Every cell is drawn the same way, whether the puzzle came with it or you put it
+there yourself — one flat colour, edge to edge, on a board with no frame around
+it and unbroken lines between the nine boxes.
 
 | Key | Does |
 | --- | --- |
@@ -39,15 +39,25 @@ relying on colour.
 | `[` / `]` | Previous or next empty cell |
 | `Tab` | Leave the board |
 | `1`–`9` | Place that colour in the selected cell |
-| `Backspace`, `Delete`, `0` | Clear the selected cell |
+| `Backspace`, `Delete` | Clear the selected cell |
 | `N` | Pencil marks on or off |
 | `Z` / `Y` | Undo / redo |
 | `H` | Reveal one colour |
+| `C` | Check the board against the solution |
 | `T` | Symbols on or off |
+| `G` | New game |
 | `P` | Pause |
 | `S` | Open colours & settings |
 | `?` | The shortcut list |
 | `Esc` | Put the current colour down |
+
+The basics are printed under the board as well, so there is no need to go
+looking for them — turn that bar off under Assists if you would rather not have
+it. Every shortcut in the table can be moved to a different key: open the
+settings sheet, go to **Keyboard shortcuts**, pick one and press the key you
+want it on. Binding a key that another shortcut was using takes it away from
+that one, which is then shown as "Not set" until you give it a key of its own.
+`Tab` and the digits `1`–`9` are the two exceptions and cannot be rebound.
 
 The board follows the ARIA grid pattern: the whole grid is a single tab stop
 with a roving `tabindex`, so `Tab` moves *out* of it to the palette and buttons
@@ -61,6 +71,17 @@ Picking a colour — from the palette or with `1`–`9` — outlines every cell 
 already holds it, so you can sweep the board for one colour without having to
 find a cell containing it first. Selecting a cell that holds a colour highlights
 that one instead.
+
+### Shapes instead of colours
+
+Under **How a cell is drawn**, "Shapes" swaps the flooded colour for the shape
+that belongs to that number — circle, square, triangle, plus, minus, wave, star,
+chevron and smile, the nine post-it shapes — drawn in the number's colour on a
+plain cell. Pencil marks become miniatures of the same shapes.
+
+**Turn colour off** goes one step further and draws every shape in a single ink.
+That turns shapes on for you, because nine identical black squares would not be
+a board: with colour gone the shape has to carry the whole value.
 
 ### Sending a puzzle to someone
 
@@ -107,7 +128,9 @@ random, and save the result as a preset of your own.
 
 Colour alone is not enough for everyone, so the palette is only one of the cues:
 
-- **Symbols.** Numbers, letters or shapes can be drawn on top of every colour,
+- **Shapes.** Every number has a shape as well as a colour, and the board can be
+  drawn with shapes instead of fills — or with shapes alone, colour off.
+- **Symbols.** Numbers or letters can be drawn on top of every colour,
   toggled from the board with the Symbols button or `T` — it brings back the set
   you last used rather than always jumping to numbers. The ink is picked
   automatically per swatch, always at 4.5:1 contrast or better.
@@ -120,7 +143,11 @@ Colour alone is not enough for everyone, so the palette is only one of the cues:
   whichever separates further. A white swatch still reads as filled.
 - **Clashes marked twice over**: a red ring *and* a diagonal hatch drawn in the
   cell's own ink, so the warning does not depend on seeing red.
-- **Shape, not just colour**, for givens versus your own entries.
+- **"Tell me when it's wrong."** Flagging clashes only catches a colour that
+  repeats in a row, column or box. Switch this on and anything that disagrees
+  with the solution is marked the same way, clash or no clash, so a wrong colour
+  cannot sit quietly on the board for twenty minutes. `C` asks the same question
+  once, without leaving the marks on.
 
 The board is a `role="grid"` of buttons: every cell is reachable from the
 keyboard, carries a spoken label like "row 4, column 7, number 3, given", and
@@ -151,10 +178,12 @@ needs matches the band:
 ## Layout
 
 ```
-index.html              markup and the two dialogs
+index.html              markup and the dialogs
 styles/main.css         tokens, layout, board; per-colour rules at the end
 src/sudoku.js           generation, solving, difficulty rating, validation
 src/palettes.js         presets, colour maths, perceptual distance
+src/shapes.js           the nine post-it shapes, as SVG paths
+src/keymap.js           the bindings, and the rules for rebinding them
 src/game.js             board state, pencil marks, undo, timer, win detection
 src/storage.js          localStorage, defensive on every read
 src/navigation.js       board movement maths: edges, wrap-around, empty cells
@@ -167,7 +196,7 @@ tests/                  node:test suites
 ```
 
 `src/sudoku.js`, `src/palettes.js`, `src/game.js`, `src/storage.js`,
-`src/navigation.js` and `src/share.js` have no DOM dependencies, which is what
+`src/navigation.js`, `src/keymap.js` and `src/share.js` have no DOM dependencies, which is what
 makes them testable in plain Node.
 
 ## Tests

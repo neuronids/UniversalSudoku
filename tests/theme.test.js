@@ -69,7 +69,6 @@ test('glyphFor returns the right symbol for each set', () => {
   assert.equal(theme.glyphFor(base(), 3), '');
   assert.equal(theme.glyphFor({ ...base(), symbols: 'numbers' }, 3), '3');
   assert.equal(theme.glyphFor({ ...base(), symbols: 'letters' }, 1), 'A');
-  assert.equal(theme.glyphFor({ ...base(), symbols: 'shapes' }, 9), '✦');
   assert.equal(theme.glyphFor({ ...base(), symbols: 'made-up' }, 3), '');
 });
 

@@ -12,6 +12,7 @@ import {
   normalizeHex,
   readableInk,
 } from './palettes.js';
+import { ACTIONS, DEFAULT_KEYMAP, bindKey, groupedActions, isBindableKey, keyLabel } from './keymap.js';
 import { DIFFICULTIES } from './sudoku.js';
 import { loadCustomPalettes, loadStats, saveCustomPalettes } from './storage.js';
 import { allPalettes, resolveColors } from './theme.js';
@@ -19,13 +20,32 @@ import { formatTime } from './ui.js';
 
 const el = (tag, className, props = {}) => Object.assign(document.createElement(tag), { className, ...props });
 
+const CELL_STYLES = [
+  ['fill', 'Colour'],
+  ['shape', 'Shapes'],
+];
+
+const COLOUR_SWITCHES = [
+  {
+    key: 'monochrome',
+    title: 'Turn colour off',
+    desc: 'Draws every value as a shape in one ink. Turns shapes on, since colour is then the only other cue.',
+  },
+];
+
 const ASSISTS = [
   { key: 'highlightPeers', title: 'Highlight the row, column and box', desc: 'Shades everything the selected cell can see.' },
   { key: 'highlightSame', title: 'Highlight the same colour', desc: 'Outlines every cell holding the colour you picked or selected.' },
   { key: 'showMistakes', title: 'Flag clashes', desc: 'Marks a colour that repeats in a row, column or box.' },
+  {
+    key: 'tellMeWrong',
+    title: "Tell me when it's wrong",
+    desc: 'Marks anything that disagrees with the solution, even when it clashes with nothing.',
+  },
   { key: 'showRemaining', title: 'Count what is left', desc: 'Shows how many of each colour are still unplaced.' },
   { key: 'autoRemoveNotes', title: 'Tidy pencil marks', desc: 'Clears notes a placement has just ruled out.' },
   { key: 'timer', title: 'Show the timer', desc: 'Times are still recorded when this is off.' },
+  { key: 'showShortcutBar', title: 'Show the shortcut bar', desc: 'Prints the basic keys under the board.' },
 ];
 
 const THEMES = [
@@ -46,10 +66,16 @@ export class SettingsSheet {
     this.hexInputs = [];
     /** Row armed for a colour swap, or null. */
     this.swapFrom = null;
+    /** The action waiting for a key press, or null. */
+    this.capturing = null;
+    this.keyRows = new Map();
     this.#buildEditor();
+    this.#buildSegmented(refs.cellStyle, CELL_STYLES, 'cellStyle');
     this.#buildSegmented(refs.symbols, Object.entries(SYMBOL_SETS).map(([id, s]) => [id, s.label]), 'symbols');
     this.#buildSegmented(refs.theme, THEMES, 'theme');
-    this.#buildSwitches();
+    this.#buildSwitches(refs.colourSwitches, COLOUR_SWITCHES);
+    this.#buildSwitches(refs.switches, ASSISTS);
+    this.#buildKeys();
     this.#bindButtons();
   }
 
@@ -59,6 +85,7 @@ export class SettingsSheet {
 
   open() {
     this.swapFrom = null;
+    this.#stopCapture();
     this.render();
     if (!this.refs.dialog.open) this.refs.dialog.showModal();
   }
@@ -143,8 +170,8 @@ export class SettingsSheet {
     }
   }
 
-  #buildSwitches() {
-    for (const { key, title, desc } of ASSISTS) {
+  #buildSwitches(root, entries) {
+    for (const { key, title, desc } of entries) {
       const label = el('label', 'switch');
       const input = el('input', '', { type: 'checkbox' });
       input.addEventListener('change', () => this.api.update({ [key]: input.checked }));
@@ -154,12 +181,103 @@ export class SettingsSheet {
       text.append(el('span', 'switch__desc', { textContent: desc }));
 
       label.append(text, input, el('span', 'switch__track'));
-      this.refs.switches.append(label);
+      root.append(label);
       label.dataset.key = key;
     }
   }
 
+  /**
+   * One row per action, each with a button that arms key capture.
+   *
+   * Capture listens on the dialog in the capture phase so the key never reaches
+   * the game's own handler — otherwise binding `p` would pause the game on the
+   * way to being bound.
+   */
+  #buildKeys() {
+    for (const { title, bindings } of groupedActions()) {
+      const group = el('div', 'keys__group');
+      group.append(el('h4', 'keys__title', { textContent: title }));
+
+      for (const { action, label } of bindings) {
+        const row = el('div', 'keys__row');
+        row.append(el('span', 'keys__label', { textContent: label }));
+
+        const button = el('button', 'keys__button', { type: 'button' });
+        button.setAttribute('aria-pressed', 'false');
+        button.addEventListener('click', () => this.#startCapture(action));
+        row.append(button);
+
+        group.append(row);
+        this.keyRows.set(action, button);
+      }
+      this.refs.keys.append(group);
+    }
+
+    this.refs.dialog.addEventListener(
+      'keydown',
+      (event) => {
+        if (this.capturing === null) return;
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          this.#stopCapture();
+          return;
+        }
+        if (!isBindableKey(event.key)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const action = this.capturing;
+        this.capturing = null;
+        this.api.update({ keymap: bindKey(this.settings.keymap, action, event.key) });
+        this.#renderKeys();
+      },
+      true
+    );
+
+    // Clicking elsewhere, or closing the sheet, gives up on the capture.
+    this.refs.dialog.addEventListener('click', (event) => {
+      if (this.capturing !== null && !(event.target instanceof HTMLElement && event.target.closest('.keys__button'))) {
+        this.#stopCapture();
+      }
+    });
+    this.refs.dialog.addEventListener('close', () => this.#stopCapture());
+  }
+
+  #startCapture(action) {
+    this.capturing = this.capturing === action ? null : action;
+    this.#renderKeys();
+  }
+
+  #stopCapture() {
+    if (this.capturing === null) return;
+    this.capturing = null;
+    this.#renderKeys();
+  }
+
+  #renderKeys() {
+    const { keymap } = this.settings;
+    for (const { action, label } of ACTIONS) {
+      const button = this.keyRows.get(action);
+      if (!button) continue;
+      const capturing = this.capturing === action;
+      const key = keymap[action];
+      button.textContent = capturing ? 'Press a key…' : key ? keyLabel(key) : 'Not set';
+      button.dataset.unset = !capturing && !key ? 'true' : 'false';
+      button.setAttribute('aria-pressed', capturing ? 'true' : 'false');
+      button.setAttribute(
+        'aria-label',
+        capturing ? `Press a key for ${label}` : `${label}: ${key ? keyLabel(key) : 'not set'}. Change it.`
+      );
+    }
+  }
+
   #bindButtons() {
+    this.refs.resetKeys.addEventListener('click', () => {
+      this.#stopCapture();
+      this.api.update({ keymap: { ...DEFAULT_KEYMAP } });
+      this.#renderKeys();
+    });
+
     this.refs.resetColors.addEventListener('click', () => {
       this.api.update({ overrides: {} });
       this.render();
@@ -210,6 +328,7 @@ export class SettingsSheet {
     this.#renderEditor();
     this.#renderNotice();
     this.#renderChoices();
+    this.#renderKeys();
     this.#renderStats();
   }
 
@@ -306,6 +425,7 @@ export class SettingsSheet {
   #renderChoices() {
     const settings = this.settings;
     for (const [root, key] of [
+      [this.refs.cellStyle, 'cellStyle'],
       [this.refs.symbols, 'symbols'],
       [this.refs.theme, 'theme'],
     ]) {
@@ -313,8 +433,10 @@ export class SettingsSheet {
         button.setAttribute('aria-checked', button.dataset.value === settings[key] ? 'true' : 'false');
       }
     }
-    for (const label of this.refs.switches.children) {
-      label.querySelector('input').checked = Boolean(settings[label.dataset.key]);
+    for (const root of [this.refs.colourSwitches, this.refs.switches]) {
+      for (const label of root.children) {
+        label.querySelector('input').checked = Boolean(settings[label.dataset.key]);
+      }
     }
   }
 

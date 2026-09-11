@@ -113,12 +113,17 @@ export const PRESETS = [
 
 export const DEFAULT_PALETTE_ID = 'pastel';
 
-/** Optional glyphs drawn on top of each colour, for extra redundancy. */
+/**
+ * Optional glyphs drawn on top of each colour, for extra redundancy.
+ *
+ * The nine post-it shapes are not here: they are a way of drawing the cell
+ * itself (see `shapes.js` and the `cellStyle` setting), not a glyph stamped on
+ * a filled square.
+ */
 export const SYMBOL_SETS = {
   none: { label: 'None', glyphs: null },
   numbers: { label: 'Numbers', glyphs: ['1', '2', '3', '4', '5', '6', '7', '8', '9'] },
   letters: { label: 'Letters', glyphs: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'] },
-  shapes: { label: 'Shapes', glyphs: ['●', '■', '▲', '◆', '★', '✚', '▼', '⬤', '✦'] },
 };
 
 export const getPreset = (id) => PRESETS.find((p) => p.id === id) || null;

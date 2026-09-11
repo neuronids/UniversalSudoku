@@ -5,6 +5,7 @@
  */
 
 import { Game } from './game.js';
+import { actionForKey, groupedActions, keyLabel } from './keymap.js';
 import { colEdge, nextEmpty, rowEdge, stepBy } from './navigation.js';
 import { formatPuzzleLink, matchesPuzzle, parsePuzzleHash } from './share.js';
 import { DIFFICULTIES } from './sudoku.js';
@@ -18,7 +19,8 @@ import {
   saveGame,
   saveSettings,
 } from './storage.js';
-import { applyColors, applyTheme, glyphFor, resolveColors } from './theme.js';
+import { shapeSprite } from './shapes.js';
+import { applyColors, applyDisplay, applyTheme, glyphFor, resolveColors } from './theme.js';
 import { BoardView, PaletteView, formatTime } from './ui.js';
 
 const $ = (id) => document.getElementById(id);
@@ -44,6 +46,7 @@ const refs = {
   symbolsToggle: $('symbols-toggle'),
   symbolsGlyph: $('symbols-glyph'),
   status: $('status'),
+  shortcutBar: $('shortcut-bar'),
   veil: $('veil'),
   veilTitle: $('veil-title'),
   veilText: $('veil-text'),
@@ -53,9 +56,13 @@ const refs = {
     presets: $('presets'),
     editor: $('editor'),
     notice: $('palette-notice'),
+    cellStyle: $('cell-style'),
+    colourSwitches: $('colour-switches'),
     symbols: $('symbols'),
     theme: $('theme'),
     switches: $('switches'),
+    keys: $('keys'),
+    resetKeys: $('reset-keys'),
     stats: $('stats'),
     savePalette: $('save-palette'),
     resetColors: $('reset-colors'),
@@ -72,6 +79,13 @@ const refs = {
     copy: $('share-copy'),
     status: $('share-status'),
   },
+  confirm: {
+    dialog: $('confirm'),
+    title: $('confirm-title'),
+    text: $('confirm-text'),
+    ok: $('confirm-ok'),
+    cancel: $('confirm-cancel'),
+  },
   win: {
     dialog: $('win'),
     ribbon: $('win-ribbon'),
@@ -84,42 +98,37 @@ const refs = {
 };
 
 /**
- * The shortcut list, rendered into the `?` sheet.
- * `Tab` is deliberately absent from the bindings themselves: the board is one
+ * The shortcut list, rendered into the `?` sheet and the bar under the board.
+ *
+ * Both are built from the live keymap, so a rebound key is written wherever it
+ * is mentioned. Two rows are fixed rather than bound: the digits, which are the
+ * game's alphabet, and Tab. Tab is deliberately not bindable — the board is one
  * tab stop with a roving tabindex, so Tab has to keep working as the way out of
- * the grid to the palette and buttons. `[` and `]` do the empty-cell jumping.
+ * the grid to the palette and the buttons.
  */
-const SHORTCUTS = [
-  {
-    title: 'Moving around',
+const FIXED_ROWS = {
+  'Moving around': [[['Tab'], 'Leave the board']],
+  Playing: [[['1 – 9'], 'Place that colour']],
+};
+
+function shortcutGroups(keymap) {
+  return groupedActions().map(({ title, bindings }) => ({
+    title,
     rows: [
-      [['↑', '↓', '←', '→'], 'Move one cell'],
-      [['Home', 'End'], 'Start or end of the row'],
-      [['Page Up', 'Page Down'], 'Top or bottom of the column'],
-      [['[', ']'], 'Previous or next empty cell'],
-      [['Tab'], 'Leave the board'],
+      ...(FIXED_ROWS[title] ?? []),
+      ...bindings.filter((b) => keymap[b.action]).map((b) => [[keyLabel(keymap[b.action])], b.label]),
     ],
-  },
-  {
-    title: 'Playing',
-    rows: [
-      [['1 – 9'], 'Place that colour'],
-      [['Backspace', 'Delete', '0'], 'Clear the cell'],
-      [['N'], 'Pencil marks on or off'],
-      [['Z', 'Y'], 'Undo or redo'],
-      [['H'], 'Reveal one colour'],
-      [['T'], 'Symbols on or off'],
-      [['Esc'], 'Put the current colour down'],
-    ],
-  },
-  {
-    title: 'Everything else',
-    rows: [
-      [['P'], 'Pause'],
-      [['S'], 'Colours and settings'],
-      [['?'], 'This list'],
-    ],
-  },
+  }));
+}
+
+/** The handful of keys worth printing under the board. */
+const BAR_ITEMS = [
+  { keys: ['moveUp', 'moveDown', 'moveLeft', 'moveRight'], label: 'Move' },
+  { fixed: ['1 – 9'], label: 'Place a colour' },
+  { keys: ['erase'], label: 'Clear' },
+  { keys: ['notes'], label: 'Notes' },
+  { keys: ['undo'], label: 'Undo' },
+  { keys: ['hint'], label: 'Hint' },
 ];
 
 const game = new Game();
@@ -134,6 +143,11 @@ let statusTimer = 0;
 // ---------------------------------------------------------------------------
 
 function updateSettings(patch) {
+  // Colour off and flooded cells cannot both hold: nine identical black squares
+  // are not a board. Turning colour off switches to shapes; going back to
+  // flooded cells turns colour back on.
+  if (patch.monochrome === true) patch = { ...patch, cellStyle: 'shape' };
+  if (patch.cellStyle === 'fill') patch = { ...patch, monochrome: false };
   settings = { ...settings, ...patch };
   saveSettings(settings);
   applyAppearance();
@@ -158,6 +172,7 @@ function toggleSymbols(on = settings.symbols === 'none') {
 function applyAppearance() {
   const colors = resolveColors(settings);
   applyColors(refs.app, colors);
+  applyDisplay(refs.app, settings);
   applyTheme(settings.theme);
   paintRibbon(colors);
 }
@@ -198,8 +213,16 @@ const sheet = new SettingsSheet(refs.settings, {
 
 function render() {
   board.render(game, settings, { armed: activeColor });
+  renderShortcutBar();
   palette.render({ active: activeColor, remaining: game.remaining(), settings });
 
+  // In shape mode the shape is the symbol, so a letter or number on top of it
+  // has nowhere to go and the toggle has nothing to do.
+  const shapeMode = settings.cellStyle === 'shape';
+  refs.symbolsToggle.disabled = shapeMode;
+  refs.symbolsToggle.title = shapeMode
+    ? 'The shapes are already the symbols'
+    : `Symbols on the colours (${keyLabel(settings.keymap.symbols)})`;
   const symbolsOn = settings.symbols !== 'none';
   refs.symbolsToggle.setAttribute('aria-pressed', symbolsOn ? 'true' : 'false');
   refs.symbolsGlyph.textContent = glyphFor(
@@ -213,6 +236,7 @@ function render() {
   refs.erase.disabled = game.selected === null || game.isGiven(game.selected);
   refs.hint.disabled = game.finished;
 
+  refs.difficulty.value = game.difficulty;
   refs.timerWrap.hidden = !settings.timer;
   refs.pause.setAttribute('aria-pressed', game.paused ? 'true' : 'false');
   refs.pause.disabled = game.finished;
@@ -278,44 +302,89 @@ function openSharedPuzzle(puzzle) {
   say('Shared puzzle — same board as whoever sent it.');
 }
 
+/**
+ * Rebuild the `?` sheet from the current bindings.
+ *
+ * It is thrown away and rebuilt rather than cached, because a rebinding has to
+ * show up the next time the sheet is opened.
+ */
 function openShortcuts() {
-  if (!refs.shortcuts.body.childElementCount) {
-    const wrap = document.createElement('div');
-    wrap.className = 'shortcuts';
+  const body = refs.shortcuts.body;
+  body.textContent = '';
 
-    for (const { title, rows } of SHORTCUTS) {
-      const group = document.createElement('section');
-      group.className = 'shortcuts__group';
+  const wrap = document.createElement('div');
+  wrap.className = 'shortcuts';
 
-      const heading = document.createElement('h3');
-      heading.className = 'shortcuts__title';
-      heading.textContent = title;
-      group.append(heading);
+  for (const { title, rows } of shortcutGroups(settings.keymap)) {
+    const group = document.createElement('section');
+    group.className = 'shortcuts__group';
 
-      for (const [keys, label] of rows) {
-        const row = document.createElement('div');
-        row.className = 'shortcuts__row';
+    const heading = document.createElement('h3');
+    heading.className = 'shortcuts__title';
+    heading.textContent = title;
+    group.append(heading);
 
-        const text = document.createElement('span');
-        text.className = 'shortcuts__label';
-        text.textContent = label;
+    for (const [keys, label] of rows) {
+      const row = document.createElement('div');
+      row.className = 'shortcuts__row';
 
-        const keyList = document.createElement('span');
-        keyList.className = 'shortcuts__keys';
-        for (const key of keys) {
-          const kbd = document.createElement('kbd');
-          kbd.textContent = key;
-          keyList.append(kbd);
-        }
+      const text = document.createElement('span');
+      text.className = 'shortcuts__label';
+      text.textContent = label;
 
-        row.append(text, keyList);
-        group.append(row);
+      const keyList = document.createElement('span');
+      keyList.className = 'shortcuts__keys';
+      for (const key of keys) {
+        const kbd = document.createElement('kbd');
+        kbd.textContent = key;
+        keyList.append(kbd);
       }
-      wrap.append(group);
+
+      row.append(text, keyList);
+      group.append(row);
     }
-    refs.shortcuts.body.append(wrap);
+    wrap.append(group);
   }
+
+  const note = document.createElement('p');
+  note.className = 'panel__hint';
+  note.textContent = 'Any of these can be changed under Keyboard shortcuts in the settings.';
+  wrap.append(note);
+
+  body.append(wrap);
   if (!refs.shortcuts.dialog.open) refs.shortcuts.dialog.showModal();
+}
+
+/** The one-line reminder under the board. */
+function renderShortcutBar() {
+  const bar = refs.shortcutBar;
+  bar.hidden = !settings.showShortcutBar;
+  if (bar.hidden) return;
+
+  bar.textContent = '';
+  for (const item of BAR_ITEMS) {
+    const keys = item.fixed ?? item.keys.map((action) => settings.keymap[action]).filter(Boolean);
+    if (!keys.length) continue;
+
+    const span = document.createElement('span');
+    span.className = 'shortcut-bar__item';
+    for (const key of keys) {
+      const kbd = document.createElement('kbd');
+      kbd.textContent = item.fixed ? key : keyLabel(key);
+      span.append(kbd);
+    }
+    const label = document.createElement('span');
+    label.textContent = item.label;
+    span.append(label);
+    bar.append(span);
+  }
+
+  const more = document.createElement('button');
+  more.type = 'button';
+  more.className = 'shortcut-bar__more';
+  more.textContent = 'All shortcuts';
+  more.addEventListener('click', () => openShortcuts());
+  bar.append(more);
 }
 
 function say(message, tone = '') {
@@ -397,27 +466,87 @@ function inProgress() {
   return game.grid.some((v, i) => v !== game.puzzle[i]);
 }
 
-function startGame(difficulty, { force = false } = {}) {
-  if (!force && inProgress() && !confirm('Start a new board? The one in progress will be lost.')) {
+/**
+ * Ask before throwing a board away.
+ *
+ * This used to be `window.confirm`, which is why changing the difficulty or
+ * starting a new game could look broken: a browser that blocks or suppresses
+ * dialogs — an embedded view, a tab with "prevent additional dialogs" ticked —
+ * returns false without showing anything, so the click did nothing at all and
+ * the difficulty snapped back to where it was. An in-page dialog always shows.
+ */
+function confirmNewGame(onYes) {
+  const { dialog, ok, cancel } = refs.confirm;
+  const close = () => {
+    ok.removeEventListener('click', yes);
+    cancel.removeEventListener('click', no);
+    if (dialog.open) dialog.close();
+  };
+  const yes = () => {
+    close();
+    onYes();
+  };
+  const no = () => {
+    close();
+    // The select already moved to the new value, so put it back.
     refs.difficulty.value = game.difficulty;
-    return;
-  }
+  };
+  ok.addEventListener('click', yes);
+  cancel.addEventListener('click', no);
+  dialog.addEventListener('cancel', no, { once: true });
+  dialog.showModal();
+  ok.focus();
+}
+
+/**
+ * Deal a new board.
+ *
+ * The generator blocks the thread for a moment, so the status line is painted
+ * first. That used to be scheduled through `requestAnimationFrame`, which never
+ * fires in a hidden or backgrounded tab — the New game button stayed disabled
+ * for good, which is the other half of "I cannot start a new game". A plain
+ * timeout always runs, and `finally` puts the button back whatever happens.
+ */
+function dealNewGame(difficulty) {
   say('Dealing colours…');
   refs.newGame.disabled = true;
-  // Let the status paint before the generator blocks the thread.
-  requestAnimationFrame(() => {
-    setTimeout(() => {
+  setTimeout(() => {
+    try {
       game.newGame(difficulty);
       activeColor = null;
       // This is no longer the puzzle the link points at; replaceState keeps it
       // out of history and fires no hashchange.
       if (location.hash) history.replaceState(null, '', location.pathname + location.search);
-      refs.difficulty.value = game.difficulty;
-      refs.newGame.disabled = false;
       say('');
       board.focus(0);
-    }, 0);
-  });
+    } finally {
+      refs.newGame.disabled = false;
+      render();
+    }
+  }, 20);
+}
+
+function startGame(difficulty, { force = false } = {}) {
+  if (!force && inProgress()) {
+    confirmNewGame(() => dealNewGame(difficulty));
+    return;
+  }
+  dealNewGame(difficulty);
+}
+
+/** Say how the board stands against the solution, on demand. */
+function checkBoard() {
+  if (game.finished) {
+    say('Solved — nothing to check.', 'good');
+    return;
+  }
+  const wrong = game.wrongCells().size;
+  const empty = game.emptyCount();
+  if (wrong) {
+    say(`${wrong} colour${wrong === 1 ? ' is' : 's are'} wrong.`, 'danger');
+    return;
+  }
+  say(empty ? `All good so far — ${empty} to go.` : 'All nine colours are in the right places.', 'good');
 }
 
 // Moving the selection repaints but changes nothing worth storing, so it does
@@ -512,11 +641,18 @@ document.addEventListener('keydown', (event) => {
   const target = event.target;
   const typing = target instanceof HTMLElement && (target.matches('input, select, textarea') || target.isContentEditable);
   if (typing) return;
-  if ([refs.settings.dialog, refs.shortcuts.dialog, refs.shareSheet.dialog, refs.win.dialog].some((d) => d.open)) return;
+  const dialogs = [
+    refs.settings.dialog,
+    refs.shortcuts.dialog,
+    refs.shareSheet.dialog,
+    refs.confirm.dialog,
+    refs.win.dialog,
+  ];
+  if (dialogs.some((d) => d.open)) return;
 
   const key = event.key;
 
-  if (key >= '1' && key <= '9') {
+  if (key >= '1' && key <= '9' && key.length === 1) {
     event.preventDefault();
     const value = Number(key);
     const index = game.selected;
@@ -527,8 +663,8 @@ document.addEventListener('keydown', (event) => {
     }
     activeColor = value;
     if (!game.isGiven(index) && !game.paused && !game.finished) {
-      // A digit always places (Backspace clears). Only tapping a cell toggles,
-      // where "tap the same colour again" is the natural undo gesture.
+      // A digit always places (the clear key clears). Only tapping a cell
+      // toggles, where "tap the same colour again" is the natural undo gesture.
       if (notesMode) game.toggleNote(index, value);
       else place(index, value);
     }
@@ -536,95 +672,93 @@ document.addEventListener('keydown', (event) => {
     return;
   }
 
-  switch (key) {
-    case 'ArrowUp':
-      event.preventDefault();
+  // Delete always clears too: it is what the key is for, and it costs nothing
+  // to honour it alongside whatever the clear action is bound to.
+  const action = key === 'Delete' ? 'erase' : actionForKey(settings.keymap, key);
+  if (!action) return;
+
+  // Every bound key belongs to the board from here on, so none of them scroll
+  // the page or type into the document.
+  event.preventDefault();
+  runAction(action);
+});
+
+/** Run a bound action by name. */
+function runAction(action) {
+  switch (action) {
+    case 'moveUp':
       move(-1, 0);
       break;
-    case 'ArrowDown':
-      event.preventDefault();
+    case 'moveDown':
       move(1, 0);
       break;
-    case 'ArrowLeft':
-      event.preventDefault();
+    case 'moveLeft':
       move(0, -1);
       break;
-    case 'ArrowRight':
-      event.preventDefault();
+    case 'moveRight':
       move(0, 1);
       break;
-    case 'Home':
-      event.preventDefault();
+    case 'rowStart':
       goTo(rowEdge(game.selected ?? 0, 'start'));
       break;
-    case 'End':
-      event.preventDefault();
+    case 'rowEnd':
       goTo(rowEdge(game.selected ?? 0, 'end'));
       break;
-    case 'PageUp':
-      event.preventDefault();
+    case 'colStart':
       goTo(colEdge(game.selected ?? 0, 'start'));
       break;
-    case 'PageDown':
-      event.preventDefault();
+    case 'colEnd':
       goTo(colEdge(game.selected ?? 0, 'end'));
       break;
-    case '[':
-      event.preventDefault();
+    case 'prevEmpty':
       jumpToEmpty(-1);
       break;
-    case ']':
-      event.preventDefault();
+    case 'nextEmpty':
       jumpToEmpty(1);
       break;
-    case '?':
-      event.preventDefault();
-      openShortcuts();
-      break;
-    case 'Backspace':
-    case 'Delete':
-    case '0':
-      event.preventDefault();
+    case 'erase':
       if (game.selected !== null) game.erase(game.selected);
       break;
-    case 'n':
-    case 'N':
+    case 'notes':
       refs.notes.click();
       break;
-    case 'z':
-    case 'Z':
+    case 'undo':
       game.undo();
       break;
-    case 'y':
-    case 'Y':
+    case 'redo':
       game.redo();
       break;
-    case 'h':
-    case 'H':
+    case 'hint':
       refs.hint.click();
       break;
-    case 't':
-    case 'T':
+    case 'check':
+      checkBoard();
+      break;
+    case 'symbols':
       refs.symbolsToggle.click();
       break;
-    case 'p':
-    case 'P':
-      refs.pause.click();
-      break;
-    case 's':
-    case 'S':
-      sheet.open();
-      break;
-    case 'Escape':
+    case 'deselect':
       if (activeColor !== null) {
         activeColor = null;
         render();
       }
       break;
+    case 'newGame':
+      refs.newGame.click();
+      break;
+    case 'pause':
+      refs.pause.click();
+      break;
+    case 'settings':
+      sheet.open();
+      break;
+    case 'shortcuts':
+      openShortcuts();
+      break;
     default:
       break;
   }
-});
+}
 
 // A link pasted into the address bar of an open tab changes the hash without
 // reloading, so the puzzle has to be picked up here too.
@@ -648,6 +782,7 @@ window.addEventListener('beforeunload', () => {
 // Start
 // ---------------------------------------------------------------------------
 
+document.body.append(shapeSprite());
 applyAppearance();
 
 const sharedPuzzle = parsePuzzleHash(location.hash);

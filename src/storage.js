@@ -5,6 +5,7 @@
  */
 
 import { DEFAULT_PALETTE_ID, SWATCH_COUNT, getPreset, sanitizeColors, isValidHex, normalizeHex } from './palettes.js';
+import { DEFAULT_KEYMAP, sanitizeKeymap } from './keymap.js';
 
 const STORAGE_PREFIX = 'sudoku-color:';
 const KEYS = {
@@ -18,15 +19,21 @@ export const DEFAULT_SETTINGS = {
   paletteId: DEFAULT_PALETTE_ID,
   /** Overrides applied on top of the chosen palette, as `{index: hex}`. */
   overrides: {},
-  symbols: 'none', // none | numbers | letters | shapes
+  symbols: 'none', // none | numbers | letters
+  cellStyle: 'fill', // fill: the colour floods the cell | shape: a post-it shape in that colour
+  monochrome: false, // draw every shape in one ink instead of nine colours
   lastSymbols: 'numbers', // what the symbol toggle turns back on
   theme: 'system', // system | light | dark
   highlightPeers: true, // dim-highlight the row, column and box of the selection
   highlightSame: true, // outline every cell holding the selected colour
   showMistakes: true, // flag values that clash with the row/column/box
+  tellMeWrong: false, // flag anything that disagrees with the solution, clash or not
   showRemaining: true, // show how many of each colour are still unplaced
   autoRemoveNotes: true, // clear pencil marks a placement rules out
   timer: true,
+  showShortcutBar: true, // the basics printed under the board
+  /** `{action: key}`; see keymap.js. */
+  keymap: { ...DEFAULT_KEYMAP },
 };
 
 const canStore = (() => {
@@ -94,10 +101,19 @@ export function loadSettings() {
       if (typeof value === 'boolean') settings[key] = value;
     } else if (key === 'overrides') {
       settings.overrides = sanitizeOverrides(value);
+    } else if (key === 'keymap') {
+      settings.keymap = sanitizeKeymap(value);
     } else if (typeof value === 'string') {
       settings[key] = value;
     }
   }
+  // Shapes used to be a glyph set stamped on a filled cell; they are now a way
+  // of drawing the cell, so an older setting carries over to the new home.
+  if (settings.symbols === 'shapes') {
+    settings.symbols = 'none';
+    settings.cellStyle = 'shape';
+  }
+  if (settings.lastSymbols === 'shapes') settings.lastSymbols = 'numbers';
   if (!getPreset(settings.paletteId) && !getCustomPalette(settings.paletteId)) {
     settings.paletteId = DEFAULT_SETTINGS.paletteId;
   }

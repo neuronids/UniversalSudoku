@@ -40,16 +40,33 @@ test('lastSymbols defaults to numbers so the toggle has something to restore', (
 });
 
 test('lastSymbols round-trips', () => {
-  storage.saveSettings({ ...DEFAULT_SETTINGS, symbols: 'none', lastSymbols: 'shapes' });
-  assert.equal(storage.loadSettings().lastSymbols, 'shapes');
+  storage.saveSettings({ ...DEFAULT_SETTINGS, symbols: 'none', lastSymbols: 'letters' });
+  assert.equal(storage.loadSettings().lastSymbols, 'letters');
 });
 
 test('settings round-trip', () => {
-  storage.saveSettings({ ...DEFAULT_SETTINGS, paletteId: 'vibrant', symbols: 'shapes', timer: false });
+  storage.saveSettings({ ...DEFAULT_SETTINGS, paletteId: 'vibrant', symbols: 'letters', timer: false });
   const loaded = storage.loadSettings();
   assert.equal(loaded.paletteId, 'vibrant');
-  assert.equal(loaded.symbols, 'shapes');
+  assert.equal(loaded.symbols, 'letters');
   assert.equal(loaded.timer, false);
+});
+
+test('an old shapes symbol set becomes the shapes cell style', () => {
+  storage.saveSettings({ ...DEFAULT_SETTINGS, symbols: 'shapes', lastSymbols: 'shapes' });
+  const loaded = storage.loadSettings();
+  assert.equal(loaded.symbols, 'none');
+  assert.equal(loaded.cellStyle, 'shape');
+  assert.equal(loaded.lastSymbols, 'numbers');
+});
+
+test('a keymap round-trips, and gaps fall back to the defaults', () => {
+  storage.saveSettings({ ...DEFAULT_SETTINGS, keymap: { moveUp: 'w', undo: 'Tab' } });
+  const loaded = storage.loadSettings();
+  assert.equal(loaded.keymap.moveUp, 'w');
+  // Tab is reserved, so undo keeps its default rather than becoming unusable.
+  assert.equal(loaded.keymap.undo, DEFAULT_SETTINGS.keymap.undo);
+  assert.equal(loaded.keymap.moveDown, 'ArrowDown');
 });
 
 test('a corrupt settings blob falls back to the defaults', () => {

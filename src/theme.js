@@ -13,6 +13,7 @@ import {
   ringFor,
   sanitizeColors,
 } from './palettes.js';
+import { shapeFor } from './shapes.js';
 import { loadCustomPalettes } from './storage.js';
 
 /** Every palette on offer: built-in presets first, then the player's own. */
@@ -65,10 +66,21 @@ export function applyTheme(theme) {
  *
  * Always the number, never the colour: a colour name tells a screen-reader user
  * nothing, while "number 3" identifies the same thing unambiguously and does not
- * shift when the symbol set changes.
+ * shift when the symbol set changes. In shape mode the shape is added, because
+ * then it is what a sighted player sees and says out loud.
  */
-export function valueLabel(value) {
-  return `number ${value}`;
+export function valueLabel(value, settings) {
+  const base = `number ${value}`;
+  return settings?.cellStyle === 'shape' ? `${base}, ${shapeFor(value).name.toLowerCase()}` : base;
+}
+
+/**
+ * Flip the attributes the stylesheet branches on: how a value is drawn, and
+ * whether it is drawn in its own colour or in one ink.
+ */
+export function applyDisplay(element, settings) {
+  element.dataset.cellStyle = settings.cellStyle === 'shape' ? 'shape' : 'fill';
+  element.dataset.mono = settings.monochrome ? 'on' : 'off';
 }
 
 export { getPreset };
