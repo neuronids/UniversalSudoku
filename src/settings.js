@@ -5,6 +5,7 @@
 
 import {
   CLOSE_THRESHOLD,
+  DEFAULT_PALETTE_ID,
   SWATCH_COUNT,
   SYMBOL_SETS,
   findCloseColors,
@@ -363,7 +364,7 @@ export class SettingsSheet {
           event.stopPropagation();
           const kept = loadCustomPalettes().filter((p) => p.id !== palette.id);
           saveCustomPalettes(kept);
-          if (settings.paletteId === palette.id) this.api.update({ paletteId: 'pastel', overrides: {} });
+          if (settings.paletteId === palette.id) this.api.update({ paletteId: DEFAULT_PALETTE_ID, overrides: {} });
           this.render();
         });
         card.append(remove);

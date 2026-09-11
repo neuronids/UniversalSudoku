@@ -1,12 +1,12 @@
 # Sudoku Color
 
-Sudoku, but the nine symbols are colours instead of digits. It ships with a
-pastel palette, five more presets — including a colour-blind safe one and a grey
-scale — and an editor for picking your own nine colours.
+Sudoku, but the nine symbols are colours instead of digits. It ships with eight
+palettes — including a colour-blind safe one and a grey scale — an editor for
+picking your own nine colours, and the option of playing by shape instead.
 
 No build step, no dependencies: it is plain HTML, CSS and ES modules.
 
-![The board with the default pastel palette](docs/screenshot-pastel.png)
+![The board with the default palette](docs/screenshot-board.png)
 
 ## Play
 
@@ -53,11 +53,17 @@ it and unbroken lines between the nine boxes.
 
 The basics are printed under the board as well, so there is no need to go
 looking for them — turn that bar off under Assists if you would rather not have
-it. Every shortcut in the table can be moved to a different key: open the
-settings sheet, go to **Keyboard shortcuts**, pick one and press the key you
-want it on. Binding a key that another shortcut was using takes it away from
-that one, which is then shown as "Not set" until you give it a key of its own.
-`Tab` and the digits `1`–`9` are the two exceptions and cannot be rebound.
+it. Every shortcut can be moved to a different key, placing a colour included:
+open the settings sheet, go to **Keyboard shortcuts**, pick one and press the
+key you want it on (`Esc` gives up on the change). Binding a key that another
+shortcut was using takes it away from that one, which is then shown as "Not set"
+until you give it a key of its own.
+
+Any key will do, `Tab` and the digits included. The only ones held back are the
+modifiers, which are never a press on their own, and `Enter` and `Space`, which
+are how a focused button is pressed anywhere on the page. Binding `Tab` does
+cost you the usual way of stepping out of the board to the palette and buttons —
+the sheet says so, and `[` and `]` still jump between empty cells.
 
 The board follows the ARIA grid pattern: the whole grid is a single tab stop
 with a roving `tabindex`, so `Tab` moves *out* of it to the palette and buttons
@@ -107,11 +113,13 @@ it just forgets between sessions.
 
 ![The colours & settings sheet](docs/screenshot-settings.png)
 
-Six presets ship with the app:
+Eight presets ship with the app:
 
 | Preset | For |
 | --- | --- |
-| **Pastel** | The default. Soft tones, tuned so no two are close. |
+| **Default** | The spectrum in order, yellow round to green. |
+| **10 + 2** | Nine colours picked to stay well apart from one another. |
+| **Pastel** | Soft tones, tuned so no two are close. |
 | **Vibrant** | Saturated and high-energy. |
 | **Colour-blind safe** | Okabe–Ito based; stays readable without red/green vision. |
 | **Blue-blind safe** | For tritanopia; avoids blue/yellow confusions. |

@@ -13,6 +13,7 @@
 import { CELLS, SIZE, boxOf, colOf, rowOf } from './sudoku.js';
 import { notesToValues } from './game.js';
 import { shapeFor } from './shapes.js';
+import { keyLabel } from './keymap.js';
 import { glyphFor, valueLabel } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -228,7 +229,10 @@ export class PaletteView {
         'aria-label',
         `${valueLabel(value, settings)}${settings.showRemaining ? `, ${left} left` : ''}`
       );
-      button.title = `${valueLabel(value, settings)} — key ${value}`;
+      const bound = settings.keymap?.[`place${value}`];
+      button.title = bound
+        ? `${valueLabel(value, settings)} — key ${keyLabel(bound)}`
+        : valueLabel(value, settings);
     });
   }
 }

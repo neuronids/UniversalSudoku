@@ -22,9 +22,12 @@ globalThis.localStorage = new MemoryStorage();
 let theme;
 let storage;
 
+let DEFAULT_PALETTE_ID;
+
 before(async () => {
   theme = await import('../src/theme.js');
   storage = await import('../src/storage.js');
+  ({ DEFAULT_PALETTE_ID } = await import('../src/palettes.js'));
 });
 
 beforeEach(() => globalThis.localStorage.clear());
@@ -32,17 +35,17 @@ beforeEach(() => globalThis.localStorage.clear());
 const base = () => ({ paletteId: 'pastel', overrides: {}, symbols: 'none' });
 
 test('allPalettes lists the presets, then any saved ones', () => {
-  assert.equal(theme.allPalettes().length, 6);
+  assert.equal(theme.allPalettes().length, 8);
   storage.saveCustomPalettes([{ id: 'mine', name: 'Mine', colors: new Array(9).fill('#101010') }]);
   const all = theme.allPalettes();
-  assert.equal(all.length, 7);
+  assert.equal(all.length, 9);
   assert.equal(all.at(-1).id, 'mine');
   assert.ok(all.at(-1).custom);
 });
 
-test('findPalette falls back to pastel for an unknown id', () => {
+test('findPalette falls back to the default palette for an unknown id', () => {
   assert.equal(theme.findPalette('vibrant').id, 'vibrant');
-  assert.equal(theme.findPalette('nonsense').id, 'pastel');
+  assert.equal(theme.findPalette('nonsense').id, DEFAULT_PALETTE_ID);
 });
 
 test('resolveColors applies overrides on top of the chosen palette', () => {

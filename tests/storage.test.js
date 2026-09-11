@@ -61,10 +61,11 @@ test('an old shapes symbol set becomes the shapes cell style', () => {
 });
 
 test('a keymap round-trips, and gaps fall back to the defaults', () => {
-  storage.saveSettings({ ...DEFAULT_SETTINGS, keymap: { moveUp: 'w', undo: 'Tab' } });
+  storage.saveSettings({ ...DEFAULT_SETTINGS, keymap: { moveUp: 'w', undo: 'Enter', place1: 'q' } });
   const loaded = storage.loadSettings();
   assert.equal(loaded.keymap.moveUp, 'w');
-  // Tab is reserved, so undo keeps its default rather than becoming unusable.
+  assert.equal(loaded.keymap.place1, 'q');
+  // Enter presses buttons, so undo keeps its default rather than becoming unusable.
   assert.equal(loaded.keymap.undo, DEFAULT_SETTINGS.keymap.undo);
   assert.equal(loaded.keymap.moveDown, 'ArrowDown');
 });

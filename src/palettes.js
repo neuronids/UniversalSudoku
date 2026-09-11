@@ -14,9 +14,41 @@ export const SWATCH_COUNT = 9;
 /** @type {Palette[]} */
 export const PRESETS = [
   {
+    id: 'default',
+    name: 'Default',
+    description: 'The spectrum, in order: yellow round to green.',
+    colors: [
+      '#f8e15a', // yellow
+      '#f8a15a', // orange
+      '#f85a5a', // red
+      '#f85aa7', // pink
+      '#9c5af8', // purple
+      '#5a8af8', // blue
+      '#5ae1f8', // cyan
+      '#5af89f', // spring green
+      '#84f85a', // green
+    ],
+  },
+  {
+    id: 'ten-plus-two',
+    name: '10 + 2',
+    description: 'Nine colours picked to stay apart from one another.',
+    colors: [
+      '#f3ebce', // cream
+      '#fc7b9b', // pink
+      '#00c9c2', // teal
+      '#eb5c20', // orange
+      '#51cf5f', // green
+      '#ca8bcd', // lilac
+      '#f4b907', // amber
+      '#d5406a', // raspberry
+      '#0088c8', // blue
+    ],
+  },
+  {
     id: 'pastel',
     name: 'Pastel',
-    description: 'Soft, low-saturation tones. The default.',
+    description: 'Soft, low-saturation tones.',
     colors: [
       '#e0858e', // blush
       '#e0c2a9', // sand
@@ -111,7 +143,7 @@ export const PRESETS = [
   },
 ];
 
-export const DEFAULT_PALETTE_ID = 'pastel';
+export const DEFAULT_PALETTE_ID = 'default';
 
 /**
  * Optional glyphs drawn on top of each colour, for extra redundancy.

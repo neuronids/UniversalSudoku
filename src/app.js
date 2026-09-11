@@ -5,7 +5,7 @@
  */
 
 import { Game } from './game.js';
-import { actionForKey, groupedActions, keyLabel } from './keymap.js';
+import { actionForKey, groupedActions, keyLabel, placedValue, placementLabels } from './keymap.js';
 import { colEdge, nextEmpty, rowEdge, stepBy } from './navigation.js';
 import { formatPuzzleLink, matchesPuzzle, parsePuzzleHash } from './share.js';
 import { DIFFICULTIES } from './sudoku.js';
@@ -101,30 +101,35 @@ const refs = {
  * The shortcut list, rendered into the `?` sheet and the bar under the board.
  *
  * Both are built from the live keymap, so a rebound key is written wherever it
- * is mentioned. Two rows are fixed rather than bound: the digits, which are the
- * game's alphabet, and Tab. Tab is deliberately not bindable — the board is one
- * tab stop with a roving tabindex, so Tab has to keep working as the way out of
- * the grid to the palette and the buttons.
+ * is mentioned. The nine placing keys collapse into one row while they are
+ * still the plain digits, because nine rows saying the obvious would bury the
+ * rest of the list.
+ *
+ * Tab leaves the board — that is the browser's doing, not a binding, so it is
+ * listed as a fixed row and only while nothing else has claimed the key.
  */
-const FIXED_ROWS = {
-  'Moving around': [[['Tab'], 'Leave the board']],
-  Playing: [[['1 – 9'], 'Place that colour']],
-};
-
 function shortcutGroups(keymap) {
-  return groupedActions().map(({ title, bindings }) => ({
-    title,
-    rows: [
-      ...(FIXED_ROWS[title] ?? []),
-      ...bindings.filter((b) => keymap[b.action]).map((b) => [[keyLabel(keymap[b.action])], b.label]),
-    ],
-  }));
+  const digitsMoved = placementLabels(keymap).length > 1;
+  const tabTaken = Object.values(keymap).includes('Tab');
+
+  return groupedActions().map(({ title, bindings }) => {
+    const rows = [];
+    if (title === 'Moving around' && !tabTaken) rows.push([['Tab'], 'Leave the board']);
+    if (title === 'Placing a colour' && !digitsMoved) {
+      rows.push([['1 – 9'], 'Place that colour']);
+    } else {
+      for (const binding of bindings) {
+        if (keymap[binding.action]) rows.push([[keyLabel(keymap[binding.action])], binding.label]);
+      }
+    }
+    return { title, rows };
+  });
 }
 
 /** The handful of keys worth printing under the board. */
 const BAR_ITEMS = [
   { keys: ['moveUp', 'moveDown', 'moveLeft', 'moveRight'], label: 'Move' },
-  { fixed: ['1 – 9'], label: 'Place a colour' },
+  { placing: true, label: 'Place a colour' },
   { keys: ['erase'], label: 'Clear' },
   { keys: ['notes'], label: 'Notes' },
   { keys: ['undo'], label: 'Undo' },
@@ -363,14 +368,17 @@ function renderShortcutBar() {
 
   bar.textContent = '';
   for (const item of BAR_ITEMS) {
-    const keys = item.fixed ?? item.keys.map((action) => settings.keymap[action]).filter(Boolean);
-    if (!keys.length) continue;
+    // Placing keys arrive ready to print; the rest are raw keys to label.
+    const labels = item.placing
+      ? placementLabels(settings.keymap)
+      : item.keys.map((action) => settings.keymap[action]).filter(Boolean).map(keyLabel);
+    if (!labels.length) continue;
 
     const span = document.createElement('span');
     span.className = 'shortcut-bar__item';
-    for (const key of keys) {
+    for (const label of labels) {
       const kbd = document.createElement('kbd');
-      kbd.textContent = item.fixed ? key : keyLabel(key);
+      kbd.textContent = label;
       span.append(kbd);
     }
     const label = document.createElement('span');
@@ -652,26 +660,6 @@ document.addEventListener('keydown', (event) => {
 
   const key = event.key;
 
-  if (key >= '1' && key <= '9' && key.length === 1) {
-    event.preventDefault();
-    const value = Number(key);
-    const index = game.selected;
-    if (index === null) {
-      activeColor = activeColor === value ? null : value;
-      render();
-      return;
-    }
-    activeColor = value;
-    if (!game.isGiven(index) && !game.paused && !game.finished) {
-      // A digit always places (the clear key clears). Only tapping a cell
-      // toggles, where "tap the same colour again" is the natural undo gesture.
-      if (notesMode) game.toggleNote(index, value);
-      else place(index, value);
-    }
-    render();
-    return;
-  }
-
   // Delete always clears too: it is what the key is for, and it costs nothing
   // to honour it alongside whatever the clear action is bound to.
   const action = key === 'Delete' ? 'erase' : actionForKey(settings.keymap, key);
@@ -683,8 +671,32 @@ document.addEventListener('keydown', (event) => {
   runAction(action);
 });
 
+/** Put a colour in the selected cell from the keyboard. */
+function placeByKey(value) {
+  const index = game.selected;
+  if (index === null) {
+    activeColor = activeColor === value ? null : value;
+    render();
+    return;
+  }
+  activeColor = value;
+  if (!game.isGiven(index) && !game.paused && !game.finished) {
+    // A placing key always places (the clear key clears). Only tapping a cell
+    // toggles, where "tap the same colour again" is the natural undo gesture.
+    if (notesMode) game.toggleNote(index, value);
+    else place(index, value);
+  }
+  render();
+}
+
 /** Run a bound action by name. */
 function runAction(action) {
+  const value = placedValue(action);
+  if (value !== null) {
+    placeByKey(value);
+    return;
+  }
+
   switch (action) {
     case 'moveUp':
       move(-1, 0);

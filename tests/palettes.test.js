@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   CLOSE_THRESHOLD,
+  DEFAULT_PALETTE_ID,
   PRESETS,
   SWATCH_COUNT,
   SYMBOL_SETS,
@@ -27,10 +28,11 @@ test('every preset offers nine valid, distinct colours', () => {
   }
 });
 
-test('preset ids are unique and pastel is present as the default', () => {
+test('preset ids are unique and the default palette is one of them', () => {
   const ids = PRESETS.map((p) => p.id);
   assert.equal(new Set(ids).size, ids.length);
-  assert.ok(getPreset('pastel'));
+  assert.ok(getPreset(DEFAULT_PALETTE_ID));
+  assert.equal(PRESETS[0].id, DEFAULT_PALETTE_ID, 'the default is the first one offered');
   assert.equal(getPreset('nope'), null);
 });
 

@@ -1,11 +1,15 @@
 /**
  * Keyboard bindings.
  *
- * Every action has a default key and can be rebound from the settings sheet.
- * The map is `{action: key}`, where a key is exactly what `KeyboardEvent.key`
- * reports — single characters are stored lowercase so `T` and `t` both match.
- * The digits 1–9 always place a colour and are deliberately not rebindable:
- * they are the game's alphabet, not a shortcut.
+ * Every action has a default key and can be rebound from the settings sheet,
+ * placing a colour included. The map is `{action: key}`, where a key is exactly
+ * what `KeyboardEvent.key` reports — single characters are stored lowercase so
+ * `T` and `t` both match.
+ *
+ * Only the keys a page cannot function without are held back: the modifiers,
+ * and Enter and Space, which are how a focused button is pressed. Everything
+ * else is fair game, `Tab` and the digits included — binding `Tab` does mean
+ * giving up the way out of the board, which is why the settings sheet says so.
  */
 
 /** @typedef {{action: string, label: string, group: string, default: string}} Binding */
@@ -22,6 +26,13 @@ export const ACTIONS = [
   { action: 'colEnd', label: 'Bottom of the column', group: 'Moving around', default: 'PageDown' },
   { action: 'prevEmpty', label: 'Previous empty cell', group: 'Moving around', default: '[' },
   { action: 'nextEmpty', label: 'Next empty cell', group: 'Moving around', default: ']' },
+
+  ...Array.from({ length: 9 }, (_, i) => ({
+    action: `place${i + 1}`,
+    label: `Place colour ${i + 1}`,
+    group: 'Placing a colour',
+    default: String(i + 1),
+  })),
 
   { action: 'erase', label: 'Clear the cell', group: 'Playing', default: 'Backspace' },
   { action: 'notes', label: 'Pencil marks on or off', group: 'Playing', default: 'n' },
@@ -53,17 +64,35 @@ export function groupedActions() {
 
 export const DEFAULT_KEYMAP = Object.fromEntries(ACTIONS.map((a) => [a.action, a.default]));
 
-/** Keys that must keep doing their own job, so they cannot be bound. */
-const RESERVED = new Set(['Tab', 'Enter', ' ', 'Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Dead']);
-
-/** Digits place colours; binding one would shadow the game's own alphabet. */
-const isDigit = (key) => key.length === 1 && key >= '0' && key <= '9';
+/**
+ * Keys that must keep doing their own job, so they cannot be bound: the
+ * modifiers, which are never a press on their own, and Enter and Space, which
+ * are how a focused button is pressed anywhere on the page.
+ */
+const RESERVED = new Set(['Enter', ' ', 'Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Dead']);
 
 /** Whether a key event can be captured as a binding. */
 export function isBindableKey(key) {
-  if (!key || RESERVED.has(key)) return false;
-  if (isDigit(key)) return false;
-  return true;
+  return Boolean(key) && !RESERVED.has(key);
+}
+
+/** The nine placing actions, in order. */
+export const PLACE_ACTIONS = Array.from({ length: 9 }, (_, i) => `place${i + 1}`);
+
+/** The value a placing action places, or null for anything else. */
+export function placedValue(action) {
+  const index = PLACE_ACTIONS.indexOf(action);
+  return index === -1 ? null : index + 1;
+}
+
+/**
+ * How the placing keys read as one line: `1 – 9` while they are still the nine
+ * plain digits in order, and the actual keys once any of them has moved.
+ */
+export function placementLabels(keymap) {
+  const keys = PLACE_ACTIONS.map((action) => keymap[action]);
+  if (keys.every((key, i) => key === String(i + 1))) return ['1 – 9'];
+  return keys.filter(Boolean).map(keyLabel);
 }
 
 /** Store a key the way lookups will see it. */
