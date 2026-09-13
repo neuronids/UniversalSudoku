@@ -1,6 +1,6 @@
 {
-  "name": "Sudoku Color",
-  "short_name": "SudokuColor",
+  "name": "VisualSudoku",
+  "short_name": "VisualSudoku",
   "description": "Sudoku played with colours instead of numbers, with palettes you can change.",
   "start_url": "./",
   "scope": "./",
