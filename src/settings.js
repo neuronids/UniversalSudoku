@@ -20,7 +20,7 @@ import { formatTime } from './ui.js';
 const el = (tag, className, props = {}) => Object.assign(document.createElement(tag), { className, ...props });
 
 const ASSISTS = [
-  { key: 'highlightPeers', title: 'Highlight the row, column and box', desc: 'Shades everything the selected cell can see.' },
+  { key: 'highlightPeers', title: 'Highlight the row and column', desc: "Washes the selected cell's row and column in its colour." },
   { key: 'highlightSame', title: 'Highlight the same colour', desc: 'Outlines every cell holding the colour you picked or selected.' },
   { key: 'showMistakes', title: 'Flag clashes', desc: 'Marks a colour that repeats in a row, column or box.' },
   { key: 'showRemaining', title: 'Count what is left', desc: 'Shows how many of each colour are still unplaced.' },

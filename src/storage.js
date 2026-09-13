@@ -21,7 +21,7 @@ export const DEFAULT_SETTINGS = {
   symbols: 'none', // none | numbers | letters | shapes
   lastSymbols: 'numbers', // what the symbol toggle turns back on
   theme: 'system', // system | light | dark
-  highlightPeers: true, // dim-highlight the row, column and box of the selection
+  highlightPeers: true, // wash the row and column of the selection in its colour
   highlightSame: true, // outline every cell holding the selected colour
   showMistakes: true, // flag values that clash with the row/column/box
   showRemaining: true, // show how many of each colour are still unplaced

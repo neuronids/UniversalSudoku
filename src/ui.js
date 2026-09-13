@@ -5,7 +5,7 @@
  * repaint never disturbs focus or the caret in the settings sheet.
  */
 
-import { CELLS, SIZE, boxOf, colOf, rowOf } from './sudoku.js';
+import { CELLS, SIZE, colOf, rowOf } from './sudoku.js';
 import { notesToValues } from './game.js';
 import { glyphFor, valueLabel } from './theme.js';
 
@@ -80,6 +80,11 @@ export class BoardView {
     const highlightValue = selectedValue || armed || 0;
     const conflicts = settings.showMistakes ? game.conflicts() : new Set();
 
+    // The row and column wash takes the selected cell's own colour, so the
+    // crosshair reads as "this colour, here" rather than a neutral shade.
+    if (selectedValue) this.root.dataset.peer = String(selectedValue);
+    else delete this.root.dataset.peer;
+
     for (let i = 0; i < CELLS; i++) {
       const { cell, glyph, notes } = this.cells[i];
       const value = game.grid[i];
@@ -92,7 +97,7 @@ export class BoardView {
       cell.classList.toggle('is-conflict', conflicts.has(i));
       cell.classList.toggle(
         'is-peer',
-        Boolean(settings.highlightPeers && selected !== null && i !== selected && sharesUnit(i, selected))
+        Boolean(settings.highlightPeers && selected !== null && i !== selected && sharesLine(i, selected))
       );
       cell.classList.toggle(
         'is-same',
@@ -132,7 +137,8 @@ export class BoardView {
   }
 }
 
-const sharesUnit = (a, b) => rowOf(a) === rowOf(b) || colOf(a) === colOf(b) || boxOf(a) === boxOf(b);
+/** Same row or same column — the box is deliberately left out of the wash. */
+const sharesLine = (a, b) => rowOf(a) === rowOf(b) || colOf(a) === colOf(b);
 
 function describeCell(index, value, marks, given, settings) {
   const where = `row ${rowOf(index) + 1}, column ${colOf(index) + 1}`;

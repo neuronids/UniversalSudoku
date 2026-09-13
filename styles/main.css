@@ -478,8 +478,17 @@ body {
   z-index: 3;
 }
 
+/*
+ * The row and column of the selection get a wash of the selected cell's own
+ * colour, a tenth of it over the empty-cell background. With nothing coloured
+ * selected there is no colour to borrow, so the neutral shade stands in.
+ */
+.board {
+  --peer-wash: var(--cell-peer);
+}
+
 .cell.is-peer:not([data-value]) {
-  background: var(--cell-peer);
+  background: var(--peer-wash);
 }
 
 /* The fill: givens flood the cell, entries sit inside a rounded square. */
@@ -1427,6 +1436,10 @@ kbd {
   background: var(--c1);
 }
 
+.board[data-peer='1'] {
+  --peer-wash: color-mix(in srgb, var(--c1) 12%, var(--cell-empty));
+}
+
 .swatch[data-value='1'] {
   --swatch: var(--c1);
   --swatch-ring: var(--r1);
@@ -1445,6 +1458,10 @@ kbd {
 
 .cell__notes i[data-v='2'][data-on] {
   background: var(--c2);
+}
+
+.board[data-peer='2'] {
+  --peer-wash: color-mix(in srgb, var(--c2) 12%, var(--cell-empty));
 }
 
 .swatch[data-value='2'] {
@@ -1467,6 +1484,10 @@ kbd {
   background: var(--c3);
 }
 
+.board[data-peer='3'] {
+  --peer-wash: color-mix(in srgb, var(--c3) 12%, var(--cell-empty));
+}
+
 .swatch[data-value='3'] {
   --swatch: var(--c3);
   --swatch-ring: var(--r3);
@@ -1485,6 +1506,10 @@ kbd {
 
 .cell__notes i[data-v='4'][data-on] {
   background: var(--c4);
+}
+
+.board[data-peer='4'] {
+  --peer-wash: color-mix(in srgb, var(--c4) 12%, var(--cell-empty));
 }
 
 .swatch[data-value='4'] {
@@ -1507,6 +1532,10 @@ kbd {
   background: var(--c5);
 }
 
+.board[data-peer='5'] {
+  --peer-wash: color-mix(in srgb, var(--c5) 12%, var(--cell-empty));
+}
+
 .swatch[data-value='5'] {
   --swatch: var(--c5);
   --swatch-ring: var(--r5);
@@ -1525,6 +1554,10 @@ kbd {
 
 .cell__notes i[data-v='6'][data-on] {
   background: var(--c6);
+}
+
+.board[data-peer='6'] {
+  --peer-wash: color-mix(in srgb, var(--c6) 12%, var(--cell-empty));
 }
 
 .swatch[data-value='6'] {
@@ -1547,6 +1580,10 @@ kbd {
   background: var(--c7);
 }
 
+.board[data-peer='7'] {
+  --peer-wash: color-mix(in srgb, var(--c7) 12%, var(--cell-empty));
+}
+
 .swatch[data-value='7'] {
   --swatch: var(--c7);
   --swatch-ring: var(--r7);
@@ -1567,6 +1604,10 @@ kbd {
   background: var(--c8);
 }
 
+.board[data-peer='8'] {
+  --peer-wash: color-mix(in srgb, var(--c8) 12%, var(--cell-empty));
+}
+
 .swatch[data-value='8'] {
   --swatch: var(--c8);
   --swatch-ring: var(--r8);
@@ -1585,6 +1626,10 @@ kbd {
 
 .cell__notes i[data-v='9'][data-on] {
   background: var(--c9);
+}
+
+.board[data-peer='9'] {
+  --peer-wash: color-mix(in srgb, var(--c9) 12%, var(--cell-empty));
 }
 
 .swatch[data-value='9'] {
