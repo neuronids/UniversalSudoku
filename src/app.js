@@ -406,31 +406,45 @@ function say(message, tone = '') {
 // Moves
 // ---------------------------------------------------------------------------
 
-function activateCell(index) {
-  if (game.paused || game.finished) {
-    game.select(index);
-    return;
-  }
-  game.select(index);
+/** Put the armed colour down, if one is armed. */
+function disarm() {
   if (activeColor === null) return;
-  if (game.isGiven(index)) return;
-
-  if (notesMode) {
-    game.toggleNote(index, activeColor);
-  } else if (game.grid[index] === activeColor) {
-    game.erase(index);
-  } else {
-    place(index, activeColor);
-  }
+  activeColor = null;
+  render();
 }
 
+/**
+ * A tap on a cell.
+ *
+ * A colour only ever lands in an empty cell. Tapping a cell that already holds
+ * something — a given or your own entry — selects it and puts the armed colour
+ * down instead, so the tap reads as "show me this cell" and the cell after it
+ * cannot be filled by a colour you had forgotten was armed. Clearing a cell is
+ * the Erase button or Backspace, which say so.
+ */
+function activateCell(index) {
+  game.select(index);
+  if (game.paused || game.finished) return;
+  if (activeColor === null) return;
+
+  if (game.isGiven(index) || game.grid[index] !== 0) {
+    disarm();
+    return;
+  }
+
+  if (notesMode) game.toggleNote(index, activeColor);
+  else place(index, activeColor);
+}
+
+/**
+ * Arm or disarm a colour.
+ *
+ * Picking a colour never writes to the board on its own — it only says what
+ * the next tap on an empty cell will place, and outlines the cells already
+ * holding it.
+ */
 function pickColor(value) {
   activeColor = activeColor === value ? null : value;
-  const index = game.selected;
-  if (activeColor !== null && index !== null && !game.isGiven(index) && !game.paused && !game.finished) {
-    if (notesMode) game.toggleNote(index, value);
-    else if (game.grid[index] !== value) place(index, value);
-  }
   render();
 }
 
@@ -643,6 +657,24 @@ refs.win.share.addEventListener('click', () => {
 });
 refs.win.close.addEventListener('click', () => refs.win.dialog.close());
 
+// A press anywhere that is not the board or the controls under it puts the
+// armed colour down. Without this the colour survives out of sight — you come
+// back to the board, tap a cell to look at it, and a shape you no longer
+// remember arming lands in it.
+//
+// pointerdown rather than click, so the colour is already down by the time the
+// press turns into a click, and capture so it still runs for handlers that
+// stop the event on the way up.
+document.addEventListener(
+  'pointerdown',
+  (event) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest('#board, .controls')) return;
+    disarm();
+  },
+  true
+);
+
 // ---------------------------------------------------------------------------
 // Keyboard
 // ---------------------------------------------------------------------------
@@ -753,10 +785,7 @@ function runAction(action) {
       refs.symbolsToggle.click();
       break;
     case 'deselect':
-      if (activeColor !== null) {
-        activeColor = null;
-        render();
-      }
+      disarm();
       break;
     case 'newGame':
       refs.newGame.click();

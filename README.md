@@ -22,10 +22,17 @@ Then visit <http://localhost:8080>.
 
 ### How it works
 
-Pick a colour from the palette, then tap the cells it belongs in — or tap a cell
-first and then a colour. Tapping a cell that already holds the armed colour
-clears it again. Each colour goes once per row, once per column and once per box,
-exactly as with digits.
+Pick a colour from the palette, then tap the empty cells it belongs in. Each
+colour goes once per row, once per column and once per box, exactly as with
+digits.
+
+The colour stays armed so you can sweep the board with it, and it only ever
+lands in an empty cell. Tapping a cell that already holds something — a given or
+one of your own entries — selects it and puts the colour down instead, so you
+can look at a cell, and at everything sharing its row, column and box, without
+editing it by accident. Pressing anywhere away from the board and its controls
+does the same, as does `Esc`. Clearing a cell is the Erase button or
+`Backspace`.
 
 Every cell is drawn the same way, whether the puzzle came with it or you put it
 there yourself — one flat colour, edge to edge, on a board with no frame around
