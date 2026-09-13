@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS = {
   monochrome: false, // draw every shape in one ink instead of nine colours
   lastSymbols: 'numbers', // what the symbol toggle turns back on
   theme: 'system', // system | light | dark
-  highlightPeers: true, // dim-highlight the row, column and box of the selection
+  highlightPeers: true, // wash the row and column of the selection in its colour
   highlightSame: true, // outline every cell holding the selected colour
   showMistakes: true, // flag values that clash with the row/column/box
   tellMeWrong: true, // flag anything that disagrees with the solution, clash or not
