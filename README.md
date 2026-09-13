@@ -1,5 +1,8 @@
 # UniversalSudoku
 
+**[Play it](https://neuronids.github.io/UniversalSudoku/)** ·
+[the demo page](https://neuronids.github.io/UniversalSudoku/demo.html)
+
 Sudoku, but the nine symbols are colours instead of digits. It ships with eight
 palettes — including a colour-blind safe one and a grey scale — an editor for
 picking your own nine colours, and the option of playing by shape instead.
@@ -17,13 +20,16 @@ app, loaded from the same modules; the only differences are that it starts on
 easy, shows the palette and shape controls beside the board, and saves nothing,
 so trying the neon palette there cannot disturb the colours you play in.
 
-Serve the repository and open <http://localhost:8080/demo.html>, or link
-straight to it once the site is deployed.
+It is at <https://neuronids.github.io/UniversalSudoku/demo.html>, or
+<http://localhost:8080/demo.html> when you are serving the repository yourself.
 
 ## Play
 
-Open `index.html` through any static web server (ES modules do not load from
-`file://`):
+It is live at <https://neuronids.github.io/UniversalSudoku/> — nothing to
+install, and it keeps your game in the browser you opened it in.
+
+To run it yourself, open `index.html` through any static web server (ES modules
+do not load from `file://`):
 
 ```sh
 npm start          # python3 -m http.server 8080
@@ -244,9 +250,20 @@ and every malformed fragment) and storage (every corrupt-input path).
 
 ## Deploying
 
-It is a static site — serve the repository root as-is. For GitHub Pages, enable
-Pages on the branch and set the folder to `/` (root); no build step is involved.
-The game is then at `/`, and the demo page at `/demo.html`.
+It is a static site — serve the repository root as-is. There is nothing to
+build, so there is nothing to configure.
+
+`.github/workflows/pages.yml` does it on GitHub Pages: every push to the
+default branch runs the tests, uploads the repository root and deploys it, so
+the game is at `/` and the demo page at `/demo.html`. The workflow turns Pages
+on the first time it runs; if your token cannot do that, set **Settings →
+Pages → Source** to **GitHub Actions** once and re-run it. Deploying from a
+branch instead works just as well — pick the branch and `/` (root) — the
+workflow only adds the tests and saves the click.
+
+The absolute URLs in the `og:` tags of `index.html` and `demo.html` name
+`neuronids.github.io`; they only matter for how a shared link previews, but
+they are what to change if the site moves to a domain of its own.
 
 ## Licence
 

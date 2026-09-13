@@ -1,0 +1,59 @@
+# Publish the site to GitHub Pages.
+#
+# There is nothing to build: the repository root *is* the site, so the whole
+# checkout is uploaded as-is. The game lands at the site root and the demo page
+# at /demo.html.
+name: Pages
+
+on:
+  push:
+    branches: [claude/main]
+  workflow_dispatch:
+
+# Pages needs to read the checkout, mint an id-token for the deployment, and
+# write the deployment itself. Nothing else.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and never cancel one half-way: a cancelled deploy
+# can leave the live site on the previous version with no run to retry.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run the test suite
+        # A red suite should not reach the live site.
+        run: npm test
+
+      - name: Configure Pages
+        # `enablement` turns Pages on the first time this runs, so the site does
+        # not wait on somebody finding the setting.
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload the site
+        # The repository root, minus .git and .github, which the action drops.
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
