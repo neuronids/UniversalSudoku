@@ -1,0 +1,368 @@
+/* ==========================================================================
+   The demo page.
+
+   `styles/main.css` comes first and does the heavy lifting: the tokens, the
+   board, the palette, the buttons. This file is only the page around them —
+   the hero, the sections, the cards — plus the handful of overrides that let
+   the app's shell sit inside a page instead of being one.
+   ========================================================================== */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2.5rem, 7vw, 5rem);
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(0.9rem, 2.5vw, 1.6rem) clamp(0.9rem, 3vw, 1.6rem)
+    max(2.5rem, env(safe-area-inset-bottom));
+}
+
+/* --------------------------------------------------------------------------
+   Top bar
+   -------------------------------------------------------------------------- */
+
+.page__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
+.page__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.page__brand b {
+  font-weight: 800;
+}
+
+.page__nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.page__nav .btn {
+  text-decoration: none;
+}
+
+/* --------------------------------------------------------------------------
+   Hero
+   -------------------------------------------------------------------------- */
+
+.hero {
+  display: grid;
+  gap: 1.1rem;
+  justify-items: start;
+  max-width: 46rem;
+}
+
+.hero__title {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.hero__lede {
+  margin: 0;
+  max-width: 40rem;
+  color: var(--text-dim);
+  font-size: clamp(1rem, 2.4vw, 1.15rem);
+  line-height: 1.6;
+}
+
+.hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.2rem 0 0;
+}
+
+.btn--big {
+  min-height: 50px;
+  padding: 0 1.3rem;
+  font-size: 1rem;
+  text-decoration: none;
+}
+
+/* Three plain claims under the buttons, not a feature grid. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.9rem 1.6rem;
+  width: 100%;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.facts li {
+  display: grid;
+  gap: 0.15rem;
+  padding-top: 0.7rem;
+  border-top: 2px solid var(--line);
+  font-size: 0.88rem;
+}
+
+.facts b {
+  font-weight: 700;
+}
+
+.facts span {
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   Sections
+   -------------------------------------------------------------------------- */
+
+.section {
+  display: grid;
+  gap: clamp(1.1rem, 3vw, 1.8rem);
+}
+
+.section__head {
+  display: grid;
+  gap: 0.55rem;
+  max-width: 46rem;
+}
+
+.section__head h2,
+.closing h2,
+.split h2 {
+  margin: 0;
+  font-size: clamp(1.4rem, 3.6vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.section__head p,
+.section__note {
+  margin: 0;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+/* --------------------------------------------------------------------------
+   The live board
+
+   The demo re-uses `.app`, because the board and palette styles hang off it —
+   `data-cell-style` and `data-mono` are read from that element. It just has to
+   stop behaving like a whole screen first.
+   -------------------------------------------------------------------------- */
+
+.demo-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.2rem, 3.5vw, 2rem);
+  align-items: start;
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+  padding: clamp(0.9rem, 3vw, 1.6rem);
+  /* A shade off the card white, so the board's empty cells read as the board
+     without a frame being drawn round them — the app gets the same separation
+     from the page background. */
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+}
+
+@media (min-width: 62rem) {
+  .demo-stage {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 21rem);
+    /* The palette cards make the side column the taller of the two, so the
+       board rides in the middle of it rather than leaving a hole underneath. */
+    align-items: center;
+  }
+}
+
+.demo-play {
+  display: grid;
+  gap: 0.8rem;
+  justify-items: center;
+  width: 100%;
+}
+
+.demo-play .board-shell,
+.demo-play .palette {
+  width: min(100%, 34rem);
+}
+
+.demo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.demo-side {
+  display: grid;
+  gap: 1.1rem;
+  width: 100%;
+}
+
+.demo-panel {
+  display: grid;
+  gap: 0;
+}
+
+/* The preset cards are dense on their own; two columns is plenty at any width
+   the side column ever takes. */
+.demo-side .preset-grid {
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+}
+
+.demo-side__note {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   Cards, screenshots, tables
+   -------------------------------------------------------------------------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 0.9rem;
+}
+
+.card {
+  display: grid;
+  gap: 0.4rem;
+  align-content: start;
+  padding: 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.card p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.card code {
+  font-size: 0.85em;
+}
+
+.shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1.1rem;
+}
+
+.shot {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+}
+
+.shot figcaption {
+  color: var(--text-dim);
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.section--split {
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.split {
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table th {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.table th,
+.table td {
+  padding: 0.5rem 0.7rem 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: baseline;
+}
+
+.table td:first-child {
+  white-space: nowrap;
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Closing
+   -------------------------------------------------------------------------- */
+
+.closing {
+  display: grid;
+  gap: 0.8rem;
+  justify-items: start;
+  max-width: 46rem;
+}
+
+.closing p {
+  margin: 0;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.page__foot {
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--line);
+  color: var(--text-dim);
+  font-size: 0.83rem;
+}
+
+.page__foot p {
+  margin: 0;
+}

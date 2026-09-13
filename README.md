@@ -8,6 +8,18 @@ No build step, no dependencies: it is plain HTML, CSS and ES modules.
 
 ![The board with the default palette](docs/screenshot-board.png)
 
+## The demo page
+
+`demo.html` is a page about the game with the game inside it: a short tour —
+what it is, how the board stays readable, what the difficulties mean — around a
+board that really plays. It is the same generator and the same renderer as the
+app, loaded from the same modules; the only differences are that it starts on
+easy, shows the palette and shape controls beside the board, and saves nothing,
+so trying the neon palette there cannot disturb the colours you play in.
+
+Serve the repository and open <http://localhost:8080/demo.html>, or link
+straight to it once the site is deployed.
+
 ## Play
 
 Open `index.html` through any static web server (ES modules do not load from
@@ -195,7 +207,9 @@ needs matches the band:
 
 ```
 index.html              markup and the dialogs
+demo.html               the demo page: a tour with a playable board in it
 styles/main.css         tokens, layout, board; per-colour rules at the end
+styles/demo.css         the demo page around the board it borrows
 src/sudoku.js           generation, solving, difficulty rating, validation
 src/palettes.js         presets, colour maths, perceptual distance
 src/shapes.js           the nine post-it shapes, as SVG paths
@@ -208,6 +222,7 @@ src/theme.js            settings -> CSS custom properties
 src/ui.js               board and palette rendering
 src/settings.js         the colours & settings sheet
 src/app.js              wiring, keyboard, persistence
+src/demo.js             the demo page: the same pieces, nothing saved
 tests/                  node:test suites
 ```
 
@@ -221,7 +236,7 @@ makes them testable in plain Node.
 npm test
 ```
 
-89 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
+110 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
 the colour maths (contrast, perceptual distance, palette validation), the game
 state machine (undo across notes, win detection, snapshot round-trips), board
 navigation (edge clamping, wrap-around, full boards), puzzle links (round-trips
@@ -231,6 +246,7 @@ and every malformed fragment) and storage (every corrupt-input path).
 
 It is a static site — serve the repository root as-is. For GitHub Pages, enable
 Pages on the branch and set the folder to `/` (root); no build step is involved.
+The game is then at `/`, and the demo page at `/demo.html`.
 
 ## Licence
 

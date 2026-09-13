@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UniversalSudoku — a demo you can play</title>
+    <meta
+      name="description"
+      content="A playable tour of UniversalSudoku: a sudoku whose nine symbols are colours, with eight palettes, shapes instead of colours, and symbols on top. The board on this page is the real game."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14161c" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/demo.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#try">Skip to the playable board</a>
+
+    <div class="page">
+      <header class="page__top">
+        <a class="page__brand" href="./">
+          <span class="brand-mark" aria-hidden="true">
+            <i style="background: #f8e15a"></i><i style="background: #f85aa7"></i>
+            <i style="background: #5a8af8"></i><i style="background: #84f85a"></i>
+          </span>
+          <span>Universal<b>Sudoku</b></span>
+        </a>
+        <nav class="page__nav" aria-label="Elsewhere">
+          <a class="btn" href="https://github.com/neuronids/UniversalSudoku">Source</a>
+          <a class="btn btn--primary" href="./">Play the full game</a>
+        </nav>
+      </header>
+
+      <section class="hero">
+        <h1 class="hero__title">A sudoku where the nine symbols are colours.</h1>
+        <p class="hero__lede">
+          Same rules, no digits: each colour goes once per row, once per column and once per box.
+          It ships with eight palettes — a colour-blind safe one and a grey scale among them — an
+          editor for picking your own nine, and the option of playing by shape instead.
+        </p>
+        <p class="hero__cta">
+          <a class="btn btn--primary btn--big" href="#try">Play the board below</a>
+          <a class="btn btn--big" href="./">Open the full game</a>
+        </p>
+        <ul class="facts">
+          <li><b>No build step</b><span>Plain HTML, CSS and ES modules. No dependencies.</span></li>
+          <li><b>No server</b><span>Puzzles are generated in the tab and travel as a link.</span></li>
+          <li><b>Built to be read</b><span>Shapes, symbols, rings and a warning when colours sit too close.</span></li>
+        </ul>
+      </section>
+
+      <!-- The demo board ---------------------------------------------------->
+      <section class="section" id="try">
+        <div class="section__head">
+          <h2>Try it</h2>
+          <p>
+            This is not a picture of the game. The board below is the game's own board, running
+            the same generator and the same renderer as <a href="./">the app</a> — the only
+            difference is that nothing here is saved, so the palette you try out is forgotten when
+            you leave. Pick a colour, then tap the empty cells it belongs in; it stays armed, so
+            you can sweep the board with one colour. Tapping a filled cell puts it down again.
+          </p>
+        </div>
+
+        <div class="app demo-stage" id="demo-stage">
+          <div class="demo-play">
+            <div class="board-shell">
+              <div
+                class="board"
+                id="demo-board"
+                role="grid"
+                aria-label="Sudoku board, 9 by 9"
+                aria-describedby="demo-help"
+              ></div>
+            </div>
+
+            <div class="palette" id="demo-palette" role="toolbar" aria-label="Colour palette"></div>
+
+            <div class="demo-actions">
+              <label class="field field--compact">
+                <span class="visually-hidden">Difficulty</span>
+                <select id="demo-difficulty" class="select">
+                  <option value="easy" selected>Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                  <option value="expert">Expert</option>
+                </select>
+              </label>
+              <button type="button" class="btn" id="demo-new">New puzzle</button>
+              <button type="button" class="btn" id="demo-undo">Undo</button>
+              <button type="button" class="btn" id="demo-erase">Erase</button>
+              <button type="button" class="btn" id="demo-hint">Hint</button>
+            </div>
+
+            <p class="status" id="demo-status" role="status" aria-live="polite"></p>
+
+            <p class="visually-hidden" id="demo-help">
+              Choose a colour from the palette, then an empty cell. The arrow keys move, 1 to 9
+              place a colour and Backspace clears, once the board has focus.
+            </p>
+          </div>
+
+          <div class="demo-side">
+            <section class="demo-panel">
+              <h3 class="panel__title">Palette</h3>
+              <p class="panel__hint">Nine colours stand in for the digits 1 to 9. The board recolours as you pick.</p>
+              <div class="preset-grid" id="demo-presets"></div>
+            </section>
+
+            <section class="demo-panel">
+              <h3 class="panel__title">How a cell is drawn</h3>
+              <p class="panel__hint">
+                Flood the cell with its colour, or draw the post-it shape that belongs to it.
+                Turning colour off leaves the shape to carry the whole value.
+              </p>
+              <div class="segmented" id="demo-cell-style" role="radiogroup" aria-label="How a cell is drawn"></div>
+            </section>
+
+            <section class="demo-panel">
+              <h3 class="panel__title">Symbols on the colours</h3>
+              <p class="panel__hint">
+                A second cue on every cell, at 4.5:1 contrast or better against its swatch.
+              </p>
+              <div class="segmented" id="demo-symbols" role="radiogroup" aria-label="Symbols on the colours"></div>
+            </section>
+
+            <section class="demo-panel">
+              <h3 class="panel__title">Theme</h3>
+              <div class="segmented" id="demo-theme" role="radiogroup" aria-label="Theme"></div>
+            </section>
+
+            <p class="demo-side__note">
+              The full game has the rest: your own nine colours, saved presets, pencil marks,
+              rebindable keys, a timer and your best times.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- What it does ------------------------------------------------------>
+      <section class="section">
+        <div class="section__head">
+          <h2>Making the board readable</h2>
+          <p>
+            Colour alone is not enough for everyone, so the palette is only one of the cues. Each
+            of these is a switch in the settings sheet, and three of them are on the board above.
+          </p>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <h3>Shapes as well as colours</h3>
+            <p>
+              Every number has a post-it shape — circle, square, triangle, plus, minus, wave, star,
+              chevron, smile. The board can be drawn with shapes instead of fills, or with shapes
+              alone and colour off entirely.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Symbols on top</h3>
+            <p>
+              Numbers or letters drawn over every colour, one key press away. The ink is picked per
+              swatch so it always clears 4.5:1 against the colour underneath.
+            </p>
+          </article>
+          <article class="card">
+            <h3>A warning when colours are close</h3>
+            <p>
+              Custom palettes are checked in CIE L*a*b*. If two swatches land within ΔE 18 the
+              settings sheet names the pair and offers to switch symbols on.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Mistakes marked twice over</h3>
+            <p>
+              A clash gets a red ring <em>and</em> a diagonal hatch in the cell's own ink, so the
+              warning never depends on seeing red. "Tell me when it's wrong" compares against the
+              solution, catching a wrong colour that clashes with nothing.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Reachable from the keyboard</h3>
+            <p>
+              The board follows the ARIA grid pattern: one tab stop, a roving <code>tabindex</code>,
+              selection following focus, and a spoken label per cell that names the number — never
+              the colour, which would tell a screen-reader user nothing.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Every shortcut rebindable</h3>
+            <p>
+              Pick a shortcut in the settings sheet and press the key you want it on. Any key will
+              do, the digits and <kbd>Tab</kbd> included.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- Screenshots ------------------------------------------------------->
+      <section class="section">
+        <div class="section__head">
+          <h2>The full game</h2>
+          <p>Everything the demo leaves out, in three pictures.</p>
+        </div>
+
+        <div class="shots">
+          <figure class="shot">
+            <img
+              src="docs/screenshot-board.png"
+              alt="The board mid-game with the default palette, the palette row beneath it and the timer running."
+              width="1900"
+              height="1580"
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption>The board, with the row and column of the selection washed in its own colour.</figcaption>
+          </figure>
+          <figure class="shot">
+            <img
+              src="docs/screenshot-settings.png"
+              alt="The colours and settings sheet, showing the preset grid and the nine-swatch editor."
+              width="1360"
+              height="1620"
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption>Colours &amp; settings: presets, the editor, assists and the keyboard map.</figcaption>
+          </figure>
+          <figure class="shot">
+            <img
+              src="docs/screenshot-cvd-dark.png"
+              alt="The colour-blind safe palette with numbers drawn on every cell, in the dark theme."
+              width="1900"
+              height="1580"
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption>The colour-blind safe palette with numbers on, in the dark theme.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- Keys and difficulty ----------------------------------------------- -->
+      <section class="section section--split">
+        <div class="split">
+          <h2>The keys</h2>
+          <p class="section__note">
+            These work on the board above too, once it has focus. In the full game every one of
+            them can be moved to a different key.
+          </p>
+          <table class="table">
+            <tbody>
+              <tr><td><kbd>1</kbd>–<kbd>9</kbd></td><td>Place that colour</td></tr>
+              <tr><td>Arrow keys</td><td>Move one cell</td></tr>
+              <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>Previous or next empty cell</td></tr>
+              <tr><td><kbd>Backspace</kbd></td><td>Clear the cell</td></tr>
+              <tr><td><kbd>Z</kbd> <kbd>Y</kbd></td><td>Undo, redo</td></tr>
+              <tr><td><kbd>H</kbd></td><td>Reveal one colour</td></tr>
+              <tr><td><kbd>T</kbd></td><td>Symbols on or off</td></tr>
+              <tr><td><kbd>Esc</kbd></td><td>Put the current colour down</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="split">
+          <h2>The puzzles</h2>
+          <p class="section__note">
+            Generated in the tab, always with exactly one solution. Difficulty is not a clue count:
+            each candidate is run through a solver that only knows human techniques, and kept when
+            the hardest one it needs matches the band.
+          </p>
+          <table class="table">
+            <thead>
+              <tr><th>Level</th><th>Clues</th><th>Hardest technique needed</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Easy</td><td>~42</td><td>naked singles</td></tr>
+              <tr><td>Medium</td><td>~34</td><td>hidden singles</td></tr>
+              <tr><td>Hard</td><td>~29</td><td>locked candidates</td></tr>
+              <tr><td>Expert</td><td>~25</td><td>chains and guessing</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="closing">
+        <h2>It is one folder of static files.</h2>
+        <p>
+          Clone it and serve the directory, or point GitHub Pages at the branch root. There is no
+          build, no bundler and nothing to install — the page you are reading loads the same
+          modules the game does.
+        </p>
+        <p class="hero__cta">
+          <a class="btn btn--primary btn--big" href="./">Play the full game</a>
+          <a class="btn btn--big" href="https://github.com/neuronids/UniversalSudoku">Read the source</a>
+        </p>
+      </section>
+
+      <footer class="page__foot">
+        <p>UniversalSudoku — colours, not numbers. MIT licensed.</p>
+      </footer>
+    </div>
+
+    <script type="module" src="src/demo.js"></script>
+  </body>
+</html>
