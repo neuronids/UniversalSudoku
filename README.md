@@ -1,4 +1,4 @@
-# VisualSudoku
+# UniversalSudoku
 
 Sudoku, but the nine symbols are colours instead of digits. It ships with eight
 palettes — including a colour-blind safe one and a grey scale — an editor for

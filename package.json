@@ -1,5 +1,5 @@
 {
-  "name": "visual-sudoku",
+  "name": "universal-sudoku",
   "version": "1.0.0",
   "description": "Sudoku played with colours instead of numbers, with palettes you can change.",
   "private": true,
