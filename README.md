@@ -1,7 +1,6 @@
 # UniversalSudoku
 
-**[Play it](https://neuronids.github.io/UniversalSudoku/)** ·
-[the demo page](https://neuronids.github.io/UniversalSudoku/demo.html)
+**[Play it](https://neuronids.github.io/UniversalSudoku/)**
 
 Sudoku, but the nine symbols are colours instead of digits. It ships with eight
 palettes — including a colour-blind safe one and a grey scale — an editor for
@@ -10,18 +9,6 @@ picking your own nine colours, and the option of playing by shape instead.
 No build step, no dependencies: it is plain HTML, CSS and ES modules.
 
 ![The board with the default palette](docs/screenshot-board.png)
-
-## The demo page
-
-`demo.html` is a page about the game with the game inside it: a short tour —
-what it is, how the board stays readable, what the difficulties mean — around a
-board that really plays. It is the same generator and the same renderer as the
-app, loaded from the same modules; the only differences are that it starts on
-easy, shows the palette and shape controls beside the board, and saves nothing,
-so trying the neon palette there cannot disturb the colours you play in.
-
-It is at <https://neuronids.github.io/UniversalSudoku/demo.html>, or
-<http://localhost:8080/demo.html> when you are serving the repository yourself.
 
 ## Play
 
@@ -213,9 +200,7 @@ needs matches the band:
 
 ```
 index.html              markup and the dialogs
-demo.html               the demo page: a tour with a playable board in it
 styles/main.css         tokens, layout, board; per-colour rules at the end
-styles/demo.css         the demo page around the board it borrows
 src/sudoku.js           generation, solving, difficulty rating, validation
 src/palettes.js         presets, colour maths, perceptual distance
 src/shapes.js           the nine post-it shapes, as SVG paths
@@ -228,7 +213,6 @@ src/theme.js            settings -> CSS custom properties
 src/ui.js               board and palette rendering
 src/settings.js         the colours & settings sheet
 src/app.js              wiring, keyboard, persistence
-src/demo.js             the demo page: the same pieces, nothing saved
 tests/                  node:test suites
 ```
 
@@ -255,15 +239,14 @@ build, so there is nothing to configure.
 
 `.github/workflows/pages.yml` does it on GitHub Pages: every push to the
 default branch runs the tests, uploads the repository root and deploys it, so
-the game is at `/` and the demo page at `/demo.html`. The workflow turns Pages
-on the first time it runs; if your token cannot do that, set **Settings →
+the game is at `/`. The workflow turns Pages on the first time it runs; if your token cannot do that, set **Settings →
 Pages → Source** to **GitHub Actions** once and re-run it. Deploying from a
 branch instead works just as well — pick the branch and `/` (root) — the
 workflow only adds the tests and saves the click.
 
-The absolute URLs in the `og:` tags of `index.html` and `demo.html` name
-`neuronids.github.io`; they only matter for how a shared link previews, but
-they are what to change if the site moves to a domain of its own.
+The absolute URLs in the `og:` tags of `index.html` name `neuronids.github.io`;
+they only matter for how a shared link previews, but they are what to change if
+the site moves to a domain of its own.
 
 ## Licence
 

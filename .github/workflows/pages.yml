@@ -1,8 +1,7 @@
 # Publish the site to GitHub Pages.
 #
 # There is nothing to build: the repository root *is* the site, so the whole
-# checkout is uploaded as-is. The game lands at the site root and the demo page
-# at /demo.html.
+# checkout is uploaded as-is, and the game lands at the site root.
 name: Pages
 
 on:
