@@ -239,10 +239,11 @@ build, so there is nothing to configure.
 
 `.github/workflows/pages.yml` does it on GitHub Pages: every push to the
 default branch runs the tests, uploads the repository root and deploys it, so
-the game is at `/`. The workflow turns Pages on the first time it runs; if your token cannot do that, set **Settings →
-Pages → Source** to **GitHub Actions** once and re-run it. Deploying from a
-branch instead works just as well — pick the branch and `/` (root) — the
-workflow only adds the tests and saves the click.
+the game is at `/`. The workflow turns Pages on the first time it runs; if your
+token cannot do that, set **Settings → Pages → Source** to **GitHub Actions**
+once and re-run it. Deploying from a branch instead works just as well — pick
+the branch and `/` (root) — the workflow only adds the tests and saves the
+click.
 
 The absolute URLs in the `og:` tags of `index.html` name `neuronids.github.io`;
 they only matter for how a shared link previews, but they are what to change if
