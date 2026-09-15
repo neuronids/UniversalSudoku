@@ -1,5 +1,7 @@
 # UniversalSudoku
 
+**[Play it](https://neuronids.github.io/UniversalSudoku/)**
+
 Sudoku, but the nine symbols are colours instead of digits. It ships with eight
 palettes — including a colour-blind safe one and a grey scale — an editor for
 picking your own nine colours, and the option of playing by shape instead.
@@ -10,8 +12,11 @@ No build step, no dependencies: it is plain HTML, CSS and ES modules.
 
 ## Play
 
-Open `index.html` through any static web server (ES modules do not load from
-`file://`):
+It is live at <https://neuronids.github.io/UniversalSudoku/> — nothing to
+install, and it keeps your game in the browser you opened it in.
+
+To run it yourself, open `index.html` through any static web server (ES modules
+do not load from `file://`):
 
 ```sh
 npm start          # python3 -m http.server 8080
@@ -221,7 +226,7 @@ makes them testable in plain Node.
 npm test
 ```
 
-89 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
+110 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
 the colour maths (contrast, perceptual distance, palette validation), the game
 state machine (undo across notes, win detection, snapshot round-trips), board
 navigation (edge clamping, wrap-around, full boards), puzzle links (round-trips
@@ -229,8 +234,20 @@ and every malformed fragment) and storage (every corrupt-input path).
 
 ## Deploying
 
-It is a static site — serve the repository root as-is. For GitHub Pages, enable
-Pages on the branch and set the folder to `/` (root); no build step is involved.
+It is a static site — serve the repository root as-is. There is nothing to
+build, so there is nothing to configure.
+
+`.github/workflows/pages.yml` does it on GitHub Pages: every push to the
+default branch runs the tests, uploads the repository root and deploys it, so
+the game is at `/`. The workflow turns Pages on the first time it runs; if your
+token cannot do that, set **Settings → Pages → Source** to **GitHub Actions**
+once and re-run it. Deploying from a branch instead works just as well — pick
+the branch and `/` (root) — the workflow only adds the tests and saves the
+click.
+
+The absolute URLs in the `og:` tags of `index.html` name `neuronids.github.io`;
+they only matter for how a shared link previews, but they are what to change if
+the site moves to a domain of its own.
 
 ## Licence
 
