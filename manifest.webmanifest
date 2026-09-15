@@ -1,0 +1,19 @@
+{
+  "name": "UniversalSudoku",
+  "short_name": "UniversalSudoku",
+  "description": "Sudoku played with colours instead of numbers, with palettes you can change.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f2f3f7",
+  "theme_color": "#f2f3f7",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

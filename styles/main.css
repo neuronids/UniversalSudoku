@@ -1,0 +1,1938 @@
+/* ==========================================================================
+   Sudoku Color
+   Tokens, then layout, then the board, then the panels.
+   The nine playing colours arrive as --c1..--c9 (fill), --r1..--r9 (ring) and
+   --i1..--i9 (ink for symbols); app.js writes them onto #app.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #f1f1f2;
+  --bg-grad: radial-gradient(120% 90% at 50% -10%, #fbfbfb 0%, #f0f0f1 55%, #e6e6e8 100%);
+  --surface: #ffffff;
+  --surface-2: #f6f6f7;
+  --surface-3: #ededef;
+  --line: #dcdcde;
+  --line-strong: #9a9aa0;
+  --text: #1a1a1c;
+  --text-dim: #63656b;
+  --accent: #3f4046;
+  --accent-ink: #ffffff;
+  --danger: #c62b3f;
+  --good: #1c8b5a;
+  --focus: #4b6bd6;
+  --cell-empty: #ffffff;
+  --cell-peer: #ececee;
+  --cell-selected: #dfe3ee;
+  --wash-l: 0.965;
+  --wash-c: 0.2;
+  --grid-line: #d6d6d9;
+  --grid-strong: #5f6066;
+  --shadow-1: 0 1px 2px rgb(20 20 24 / 0.05), 0 8px 24px rgb(20 20 24 / 0.06);
+  --shadow-2: 0 18px 50px rgb(20 20 24 / 0.2);
+  --radius: 14px;
+  --radius-sm: 9px;
+  --grid-hair: 1px;
+  --grid-band: 3px;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #161617;
+    --bg-grad: radial-gradient(120% 90% at 50% -10%, #262628 0%, #1b1b1d 55%, #101011 100%);
+    --surface: #202022;
+    --surface-2: #27272a;
+    --surface-3: #303034;
+    --line: #38383c;
+    --line-strong: #7b7b82;
+    --text: #f0f0f2;
+    --text-dim: #a6a6ad;
+    --accent: #e8e8ea;
+    --accent-ink: #17171a;
+    --danger: #ff7b8c;
+    --good: #56d39a;
+    --focus: #8fb0ff;
+    --cell-empty: #232326;
+    --cell-peer: #2e2e32;
+    --cell-selected: #3a3f4f;
+    --wash-l: 0.33;
+    --wash-c: 0.3;
+    --grid-line: #44444b;
+    --grid-strong: #adadb8;
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 28px rgb(0 0 0 / 0.35);
+    --shadow-2: 0 22px 60px rgb(0 0 0 / 0.6);
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #161617;
+  --bg-grad: radial-gradient(120% 90% at 50% -10%, #262628 0%, #1b1b1d 55%, #101011 100%);
+  --surface: #202022;
+  --surface-2: #27272a;
+  --surface-3: #303034;
+  --line: #38383c;
+  --line-strong: #7b7b82;
+  --text: #f0f0f2;
+  --text-dim: #a6a6ad;
+  --accent: #e8e8ea;
+  --accent-ink: #17171a;
+  --danger: #ff7b8c;
+  --good: #56d39a;
+  --focus: #8fb0ff;
+  --cell-empty: #232326;
+  --cell-peer: #2e2e32;
+  --cell-selected: #3a3f4f;
+  --wash-l: 0.33;
+  --wash-c: 0.3;
+  --grid-line: #44444b;
+  --grid-strong: #adadb8;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 28px rgb(0 0 0 / 0.35);
+  --shadow-2: 0 22px 60px rgb(0 0 0 / 0.6);
+
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg);
+  background-image: var(--bg-grad);
+  background-attachment: fixed;
+  color: var(--text);
+  font: 400 16px/1.5 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(button, select, input) {
+  font: inherit;
+  color: inherit;
+}
+
+:where(a) {
+  color: var(--accent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -120%);
+  z-index: 20;
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  text-decoration: none;
+}
+
+.skip-link:focus-visible {
+  transform: translate(-50%, 0);
+}
+
+/* --------------------------------------------------------------------------
+   Shell
+   -------------------------------------------------------------------------- */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.9rem, 2.5vw, 1.5rem);
+  max-width: 1120px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: clamp(0.75rem, 2.5vw, 1.6rem) clamp(0.6rem, 3vw, 1.6rem)
+    max(1rem, env(safe-area-inset-bottom));
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
+.topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.brand-mark {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  width: 30px;
+  height: 30px;
+  padding: 2px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+
+.brand-mark i {
+  border-radius: 3px;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: clamp(1.15rem, 3.4vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.topbar h1 span {
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.topbar h1 span::before {
+  content: ' ';
+}
+
+.topbar__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.field__label {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.field--compact .field__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.select,
+.btn {
+  --btn-bg: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 42px;
+  padding: 0 0.85rem;
+  background: var(--btn-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-1);
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, transform 0.08s, opacity 0.15s;
+}
+
+.select {
+  appearance: none;
+  padding-right: 2rem;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 1rem) 55%, calc(100% - 0.65rem) 55%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.btn:hover:not(:disabled),
+.select:hover {
+  border-color: var(--line-strong);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.btn--primary {
+  --btn-bg: var(--accent);
+  border-color: transparent;
+  color: var(--accent-ink);
+}
+
+.btn--icon {
+  width: 42px;
+  flex: none;
+  padding: 0;
+}
+
+.btn--quiet {
+  box-shadow: none;
+  color: var(--text-dim);
+}
+
+.btn--toggle[aria-pressed='true'] {
+  --btn-bg: var(--accent);
+  border-color: transparent;
+  color: var(--accent-ink);
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: currentColor;
+}
+
+.icon--flip {
+  transform: scaleX(-1);
+}
+
+.linkish {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Meta buttons stay together as a unit when the toolbar wraps on a phone. */
+.topbar__icons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 42px;
+  padding: 0 0.7rem 0 0.35rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-1);
+}
+
+.timer[hidden] {
+  display: none;
+}
+
+.timer__toggle {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 7px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.timer__toggle:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.timer__toggle .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.timer__toggle .icon--play,
+.timer__toggle[aria-pressed='true'] .icon--pause {
+  display: none;
+}
+
+.timer__toggle[aria-pressed='true'] .icon--play {
+  display: block;
+}
+
+.timer__value {
+  min-width: 3.4ch;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* --------------------------------------------------------------------------
+   Layout
+   -------------------------------------------------------------------------- */
+
+/*
+ * One centred column at every width. The board is the thing people look at, so
+ * it sits in the middle of the page with the palette directly beneath it,
+ * rather than being pushed off-centre by a sidebar.
+ */
+.layout {
+  display: grid;
+  gap: clamp(0.9rem, 3vw, 1.5rem);
+  align-items: start;
+  justify-items: center;
+  width: 100%;
+}
+
+.board-area {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+}
+
+.board-shell {
+  position: relative;
+  width: min(100%, 34rem);
+  margin-inline: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Board
+   -------------------------------------------------------------------------- */
+
+/*
+ * No frame, no gaps: the board is a plain 9×9 of touching cells on one white
+ * ground. Every line you see is drawn inside a cell (below), so nothing rings
+ * the board and the box divisions run as unbroken straight lines.
+ */
+.board {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 0;
+  aspect-ratio: 1;
+  background: var(--cell-empty);
+  border: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+/*
+ * Grid lines as inset shadows on each cell's right and bottom edge.
+ * Shadows take no layout space, so all 81 cells stay exactly the same size, and
+ * because neighbouring cells touch, each line reads as one continuous stroke
+ * from one side of the board to the other.
+ */
+.cell {
+  --edge-r: var(--grid-hair);
+  --edge-b: var(--grid-hair);
+  --edge-r-color: var(--grid-line);
+  --edge-b-color: var(--grid-line);
+
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  background: var(--cell-empty);
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 0.12s;
+}
+
+/* The two vertical and two horizontal box divisions, drawn heavier. */
+.board .cell:nth-child(9n + 3),
+.board .cell:nth-child(9n + 6) {
+  --edge-r: var(--grid-band);
+  --edge-r-color: var(--grid-strong);
+}
+
+.board .cell:nth-child(n + 19):nth-child(-n + 27),
+.board .cell:nth-child(n + 46):nth-child(-n + 54) {
+  --edge-b: var(--grid-band);
+  --edge-b-color: var(--grid-strong);
+}
+
+/* Nothing on the outside edges: the board has no border of its own. */
+.board .cell:nth-child(9n) {
+  --edge-r-color: transparent;
+}
+
+.board .cell:nth-child(n + 73) {
+  --edge-b-color: transparent;
+}
+
+.cell:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+  z-index: 3;
+}
+
+/*
+ * The row and column of the selection get a wash of the selected cell's own
+ * colour. With nothing coloured selected there is no colour to borrow, so the
+ * neutral shade stands in.
+ *
+ * The wash is the colour's hue held at one fixed lightness, not a percentage
+ * of it blended into the background. A blend keeps its strength only for a
+ * colour already far from the background: mixed into white, a tenth of the
+ * cream in 10 + 2 is still white, while a tenth of the purple is plainly
+ * purple. Pinning the lightness instead gives every colour the same step away
+ * from the empty cell — the step the saturated ones always had — and lets the
+ * colour set only the hue. Its own chroma still carries through at --wash-c,
+ * so the wash of a muted colour stays muted next to a vivid one.
+ *
+ * The wash covers filled cells too, so the crosshair runs unbroken. A flooded
+ * cell hides it under the colour; in shape mode, where the fill is clear, the
+ * wash reads straight through.
+ */
+.board {
+  --peer-wash: var(--cell-peer);
+}
+
+/*
+ * Relative colour is what makes this a recipe rather than nine hard-coded
+ * shades. Without it every colour falls back to the neutral wash, which says
+ * less but is never invisible.
+ */
+@supports (background: oklch(from white l c h)) {
+  .board[data-peer] {
+    --peer-wash: oklch(from var(--peer-color) var(--wash-l) calc(c * var(--wash-c)) h);
+  }
+}
+
+.cell.is-peer {
+  background: var(--peer-wash);
+}
+
+.cell.is-selected {
+  background: var(--cell-selected);
+}
+
+/*
+ * The fill.
+ *
+ * A given and a colour you placed yourself are drawn exactly the same way: both
+ * flood the cell edge to edge. An inset square for your own entries left a ring
+ * of white that fought with the row, column and box highlights, and the board
+ * already records which cells are givens for screen readers and for the rules.
+ */
+.cell__fill {
+  /* Zero-width stand-in so the ring can join the line shadows in one list. */
+  --fill-ring: inset 0 0 0 0 transparent;
+
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  transition: background-color 0.12s;
+  /*
+   * The grid lines ride on the fill, not on the cell, because a child element's
+   * background paints over the parent's inset shadow — drawn here they stay on
+   * top of the colour and the line never breaks across a filled cell.
+   */
+  box-shadow:
+    var(--fill-ring),
+    inset calc(-1 * var(--edge-r)) 0 0 0 var(--edge-r-color),
+    inset 0 calc(-1 * var(--edge-b)) 0 0 var(--edge-b-color);
+}
+
+/* Shapes: the value is drawn as its post-it shape instead of a flooded cell. */
+.cell__shape {
+  position: absolute;
+  inset: 17%;
+  z-index: 2;
+  display: none;
+  pointer-events: none;
+}
+
+.app[data-cell-style='shape'] .cell[data-value] .cell__shape {
+  display: block;
+}
+
+.app[data-cell-style='shape'] .cell .cell__fill {
+  background: transparent;
+  /* No colour flooding the cell means no ring around it either. */
+  --fill-ring: inset 0 0 0 0 transparent;
+}
+
+/*
+ * Colour off: every shape in the one ink the rest of the page uses.
+ * The extra `.cell` / `.swatch` in each selector is there to out-specify the
+ * per-value colour rules at the foot of this file.
+ */
+.app[data-mono='on'] .cell .cell__shape,
+.app[data-mono='on'] .cell .cell__note-shape,
+.app[data-mono='on'] .swatch .swatch__shape {
+  color: var(--text);
+}
+
+.shape-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.cell__glyph {
+  position: relative;
+  z-index: 2;
+  font-size: clamp(0.7rem, 2.6vw, 1.15rem);
+  font-weight: 800;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+.cell:not([data-value]) .cell__glyph {
+  display: none;
+}
+
+/* Pencil marks */
+.cell__notes {
+  position: absolute;
+  inset: 9%;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6%;
+  pointer-events: none;
+}
+
+.cell[data-value] .cell__notes {
+  display: none;
+}
+
+.cell__notes i {
+  position: relative;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+}
+
+.cell__notes i[data-on] {
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.18);
+}
+
+/* A pencil mark is a dot of the colour, or a miniature of the shape. */
+.cell__note-shape {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+
+.app[data-cell-style='shape'] .cell__notes i {
+  box-shadow: none;
+}
+
+.app[data-cell-style='shape'] .cell__notes i[data-on] .cell__note-shape {
+  display: block;
+}
+
+.app[data-cell-style='shape'] .cell__notes i[data-on] {
+  background: transparent;
+}
+
+/* Selection, matching colours and clashes */
+.cell.is-same::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 2px solid var(--text);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.cell.is-selected {
+  z-index: 4;
+}
+
+.cell.is-selected::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  z-index: 4;
+  border: 3px solid var(--focus);
+  pointer-events: none;
+}
+
+/*
+ * A clash is marked twice over: a red ring, and a hatch drawn in the cell's own
+ * ink colour so it stays visible on a pale or a dark fill — and so the warning
+ * still reads without seeing red.
+ */
+.board .cell.is-conflict .cell__fill {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 3px,
+    color-mix(in srgb, currentColor 34%, transparent) 3px 7px
+  );
+  --fill-ring: inset 0 0 0 2.5px var(--danger);
+}
+
+.cell.is-hint .cell__fill {
+  animation: pop 0.45s ease-out;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.2;
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Veil shown while paused or after a win */
+.board-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(6px);
+  border-radius: var(--radius);
+}
+
+.board-veil[hidden] {
+  display: none;
+}
+
+.board-veil__card {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: center;
+  max-width: 22rem;
+  padding: 1.4rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+  text-align: center;
+}
+
+.board-veil__title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.board-veil__text {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+/* --------------------------------------------------------------------------
+   Palette and actions
+   -------------------------------------------------------------------------- */
+
+.controls {
+  display: grid;
+  gap: clamp(0.6rem, 2vw, 0.9rem);
+  width: min(100%, 34rem);
+  margin-inline: auto;
+}
+
+.palette {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: clamp(3px, 1vw, 7px);
+}
+
+.swatch {
+  position: relative;
+  display: grid;
+  place-items: center;
+  /* Nine across a narrow phone makes for thin swatches, so give the row a
+     height of its own rather than a square aspect — a square would force the
+     width up too and overflow the screen. */
+  height: clamp(40px, 11.5vw, 56px);
+  padding: 0;
+  background: var(--swatch);
+  border: 2px solid var(--swatch-ring);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-1);
+  color: var(--swatch-ink);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.15s, opacity 0.15s;
+}
+
+.swatch:hover {
+  transform: translateY(-2px);
+}
+
+.swatch[aria-pressed='true'] {
+  box-shadow: 0 0 0 3px var(--focus), var(--shadow-1);
+  transform: translateY(-2px);
+}
+
+.swatch.is-done {
+  opacity: 0.32;
+}
+
+.swatch__glyph {
+  font-size: clamp(0.8rem, 2.6vw, 1.15rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.swatch__shape {
+  width: 58%;
+  height: 58%;
+  display: none;
+}
+
+.app[data-cell-style='shape'] .swatch {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.app[data-cell-style='shape'] .swatch__shape {
+  display: block;
+}
+
+.app[data-cell-style='shape'] .swatch__count {
+  color: var(--text-dim);
+}
+
+.swatch__count {
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  font-size: clamp(0.55rem, 1.7vw, 0.7rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.actions {
+  display: grid;
+  /* Six across, under the palette, at every width. */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(3px, 1vw, 7px);
+}
+
+@media (min-width: 700px) {
+  .actions {
+    gap: 0.5rem;
+  }
+}
+
+/* Stands in for an icon on the symbols toggle: it shows the glyph in play. */
+.action-glyph {
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border: 1.5px solid currentColor;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.btn--toggle[aria-pressed='false'] .action-glyph {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
+.btn--action {
+  flex-direction: column;
+  white-space: normal;
+  gap: 0.15rem;
+  min-height: 56px;
+  padding: 0.35rem 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.btn--action .icon {
+  width: 21px;
+  height: 21px;
+}
+
+.status {
+  min-height: 1.4em;
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.status[data-tone='danger'] {
+  color: var(--danger);
+}
+
+.status[data-tone='good'] {
+  color: var(--good);
+}
+
+.footer {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.footer p {
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Dialogs
+   -------------------------------------------------------------------------- */
+
+.sheet {
+  width: min(100% - 1.5rem, 680px);
+  max-height: min(90dvh, 900px);
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.sheet--small {
+  width: min(100% - 1.5rem, 420px);
+}
+
+.sheet::backdrop {
+  background: rgb(8 10 18 / 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.sheet__head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.sheet__head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.sheet__body {
+  display: grid;
+  gap: 1.4rem;
+  max-height: calc(min(90dvh, 900px) - 63px);
+  padding: 1.1rem 1rem 1.6rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.panel__title {
+  margin: 0 0 0.2rem;
+  font-size: 0.95rem;
+}
+
+.panel__hint {
+  margin: 0 0 0.7rem;
+  color: var(--text-dim);
+  font-size: 0.83rem;
+}
+
+.panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.panel__row--center {
+  justify-content: center;
+}
+
+.notice {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin: 0.8rem 0 0;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+
+.notice[hidden] {
+  display: none;
+}
+
+.notice button {
+  flex: none;
+}
+
+/* Preset cards */
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.6rem;
+}
+
+.preset {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.65rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.preset:hover {
+  border-color: var(--line-strong);
+}
+
+.preset[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.preset__strip {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  height: 22px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.preset__name {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.preset__desc {
+  color: var(--text-dim);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.preset__delete {
+  justify-self: start;
+  padding: 0.1rem 0;
+  background: none;
+  border: 0;
+  color: var(--danger);
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Colour editor */
+.editor {
+  display: grid;
+  /* Wide enough for the swatch, the "Number N" label on one line, the hex
+     field and the swap control without wrapping. */
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+  gap: 0.5rem;
+}
+
+.editor__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.45rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.editor__swatch {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.editor__swatch input {
+  position: absolute;
+  inset: -25%;
+  width: 150%;
+  height: 150%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* The number, written on its own colour. */
+.editor__stamp {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.editor__swap {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  margin-left: auto;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.editor__swap:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.editor__row.is-swapping {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.editor__row.is-swapping .editor__swap {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-ink);
+}
+
+.editor__row.is-swap-target .editor__swap {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.editor__meta {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.editor__label {
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.editor__hex {
+  width: 9ch;
+  padding: 0.1rem 0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.76rem;
+  text-transform: lowercase;
+}
+
+.editor__hex[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+/* Segmented controls and switches */
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.segmented button {
+  min-height: 34px;
+  padding: 0 0.75rem;
+  background: none;
+  border: 0;
+  border-radius: 7px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmented button[aria-checked='true'] {
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  color: var(--text);
+}
+
+.switches {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.2rem;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.switch:last-child {
+  border-bottom: 0;
+}
+
+.switch__text {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.switch__title {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.switch__desc {
+  color: var(--text-dim);
+  font-size: 0.76rem;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.switch__track {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex: none;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transition: background-color 0.15s;
+}
+
+.switch__track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: var(--surface);
+  border-radius: 50%;
+  box-shadow: var(--shadow-1);
+  transition: transform 0.15s;
+}
+
+.switch input:checked + .switch__track {
+  background: var(--accent);
+  border-color: transparent;
+}
+
+.switch input:checked + .switch__track::after {
+  transform: translateX(18px);
+}
+
+.switch input:focus-visible + .switch__track {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Stats */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.5rem;
+}
+
+.stat {
+  padding: 0.6rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.stat__label {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stat__value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__sub {
+  color: var(--text-dim);
+  font-size: 0.74rem;
+}
+
+/* Win dialog */
+.win {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.4rem 1.2rem 1.5rem;
+  text-align: center;
+}
+
+.win h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.win__ribbon {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  height: 10px;
+  margin-bottom: 0.3rem;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.win__stats {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+/* --------------------------------------------------------------------------
+   Small screens
+   -------------------------------------------------------------------------- */
+
+/*
+ * Below this the toolbar can no longer hold difficulty, New game, the clock and
+ * three icons on one line. Squeezing them onto one row collapses New game under
+ * the select, so lay the pairs out as an explicit two-row grid instead.
+ */
+@media (max-width: 560px) {
+  .topbar__tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .topbar__tools .field {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .topbar__tools .btn--primary {
+    grid-column: 2;
+  }
+
+  .timer {
+    grid-column: 1;
+  }
+
+  .topbar__icons {
+    grid-column: 2;
+    justify-content: flex-end;
+  }
+
+  .select {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .topbar__tools .select,
+  .topbar__tools .btn {
+    padding: 0 0.55rem;
+    font-size: 0.86rem;
+  }
+
+  .topbar__tools .select {
+    padding-right: 1.6rem;
+    background-position: calc(100% - 0.8rem) 55%, calc(100% - 0.45rem) 55%;
+  }
+
+  .timer {
+    padding: 0 0.5rem 0 0.2rem;
+  }
+
+  .btn--action span {
+    font-size: 0.66rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Share sheet
+   -------------------------------------------------------------------------- */
+
+.share {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.share__link {
+  flex: 1;
+  min-width: 0;
+  padding: 0 0.7rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+}
+
+.share__link:focus-visible {
+  border-color: var(--accent);
+}
+
+/* --------------------------------------------------------------------------
+   Keyboard shortcuts sheet
+   -------------------------------------------------------------------------- */
+
+.sheet--narrow {
+  width: min(100% - 1.5rem, 520px);
+}
+
+.shortcuts {
+  display: grid;
+  gap: 1.3rem;
+}
+
+.shortcuts__group {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.shortcuts__title {
+  margin: 0 0 0.35rem;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.shortcuts__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.42rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.shortcuts__group .shortcuts__row:last-child {
+  border-bottom: 0;
+}
+
+.shortcuts__label {
+  font-size: 0.88rem;
+}
+
+.shortcuts__keys {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.9em;
+  padding: 0.16em 0.45em;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgb(15 20 40 / 0.04);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+  white-space: nowrap;
+}
+
+
+/* --------------------------------------------------------------------------
+   The nine playing colours
+   One block per value so the board repaints by changing a single attribute.
+   -------------------------------------------------------------------------- */
+
+.cell[data-value='1'] .cell__fill {
+  background-color: var(--c1);
+  --fill-ring: inset 0 0 0 1.5px var(--r1);
+  color: var(--i1);
+}
+
+.cell[data-value='1'] .cell__shape,
+.cell__notes i[data-v='1'] .cell__note-shape,
+.swatch[data-value='1'] .swatch__shape {
+  color: var(--c1);
+}
+
+.cell[data-value='1'] .cell__glyph {
+  color: var(--i1);
+}
+
+.cell__notes i[data-v='1'][data-on] {
+  background: var(--c1);
+}
+
+.board[data-peer='1'] {
+  --peer-color: var(--c1);
+}
+
+.swatch[data-value='1'] {
+  --swatch: var(--c1);
+  --swatch-ring: var(--r1);
+  --swatch-ink: var(--i1);
+}
+
+.cell[data-value='2'] .cell__fill {
+  background-color: var(--c2);
+  --fill-ring: inset 0 0 0 1.5px var(--r2);
+  color: var(--i2);
+}
+
+.cell[data-value='2'] .cell__shape,
+.cell__notes i[data-v='2'] .cell__note-shape,
+.swatch[data-value='2'] .swatch__shape {
+  color: var(--c2);
+}
+
+.cell[data-value='2'] .cell__glyph {
+  color: var(--i2);
+}
+
+.cell__notes i[data-v='2'][data-on] {
+  background: var(--c2);
+}
+
+.board[data-peer='2'] {
+  --peer-color: var(--c2);
+}
+
+.swatch[data-value='2'] {
+  --swatch: var(--c2);
+  --swatch-ring: var(--r2);
+  --swatch-ink: var(--i2);
+}
+
+.cell[data-value='3'] .cell__fill {
+  background-color: var(--c3);
+  --fill-ring: inset 0 0 0 1.5px var(--r3);
+  color: var(--i3);
+}
+
+.cell[data-value='3'] .cell__shape,
+.cell__notes i[data-v='3'] .cell__note-shape,
+.swatch[data-value='3'] .swatch__shape {
+  color: var(--c3);
+}
+
+.cell[data-value='3'] .cell__glyph {
+  color: var(--i3);
+}
+
+.cell__notes i[data-v='3'][data-on] {
+  background: var(--c3);
+}
+
+.board[data-peer='3'] {
+  --peer-color: var(--c3);
+}
+
+.swatch[data-value='3'] {
+  --swatch: var(--c3);
+  --swatch-ring: var(--r3);
+  --swatch-ink: var(--i3);
+}
+
+.cell[data-value='4'] .cell__fill {
+  background-color: var(--c4);
+  --fill-ring: inset 0 0 0 1.5px var(--r4);
+  color: var(--i4);
+}
+
+.cell[data-value='4'] .cell__shape,
+.cell__notes i[data-v='4'] .cell__note-shape,
+.swatch[data-value='4'] .swatch__shape {
+  color: var(--c4);
+}
+
+.cell[data-value='4'] .cell__glyph {
+  color: var(--i4);
+}
+
+.cell__notes i[data-v='4'][data-on] {
+  background: var(--c4);
+}
+
+.board[data-peer='4'] {
+  --peer-color: var(--c4);
+}
+
+.swatch[data-value='4'] {
+  --swatch: var(--c4);
+  --swatch-ring: var(--r4);
+  --swatch-ink: var(--i4);
+}
+
+.cell[data-value='5'] .cell__fill {
+  background-color: var(--c5);
+  --fill-ring: inset 0 0 0 1.5px var(--r5);
+  color: var(--i5);
+}
+
+.cell[data-value='5'] .cell__shape,
+.cell__notes i[data-v='5'] .cell__note-shape,
+.swatch[data-value='5'] .swatch__shape {
+  color: var(--c5);
+}
+
+.cell[data-value='5'] .cell__glyph {
+  color: var(--i5);
+}
+
+.cell__notes i[data-v='5'][data-on] {
+  background: var(--c5);
+}
+
+.board[data-peer='5'] {
+  --peer-color: var(--c5);
+}
+
+.swatch[data-value='5'] {
+  --swatch: var(--c5);
+  --swatch-ring: var(--r5);
+  --swatch-ink: var(--i5);
+}
+
+.cell[data-value='6'] .cell__fill {
+  background-color: var(--c6);
+  --fill-ring: inset 0 0 0 1.5px var(--r6);
+  color: var(--i6);
+}
+
+.cell[data-value='6'] .cell__shape,
+.cell__notes i[data-v='6'] .cell__note-shape,
+.swatch[data-value='6'] .swatch__shape {
+  color: var(--c6);
+}
+
+.cell[data-value='6'] .cell__glyph {
+  color: var(--i6);
+}
+
+.cell__notes i[data-v='6'][data-on] {
+  background: var(--c6);
+}
+
+.board[data-peer='6'] {
+  --peer-color: var(--c6);
+}
+
+.swatch[data-value='6'] {
+  --swatch: var(--c6);
+  --swatch-ring: var(--r6);
+  --swatch-ink: var(--i6);
+}
+
+.cell[data-value='7'] .cell__fill {
+  background-color: var(--c7);
+  --fill-ring: inset 0 0 0 1.5px var(--r7);
+  color: var(--i7);
+}
+
+.cell[data-value='7'] .cell__shape,
+.cell__notes i[data-v='7'] .cell__note-shape,
+.swatch[data-value='7'] .swatch__shape {
+  color: var(--c7);
+}
+
+.cell[data-value='7'] .cell__glyph {
+  color: var(--i7);
+}
+
+.cell__notes i[data-v='7'][data-on] {
+  background: var(--c7);
+}
+
+.board[data-peer='7'] {
+  --peer-color: var(--c7);
+}
+
+.swatch[data-value='7'] {
+  --swatch: var(--c7);
+  --swatch-ring: var(--r7);
+  --swatch-ink: var(--i7);
+}
+
+.cell[data-value='8'] .cell__fill {
+  background-color: var(--c8);
+  --fill-ring: inset 0 0 0 1.5px var(--r8);
+  color: var(--i8);
+}
+
+.cell[data-value='8'] .cell__shape,
+.cell__notes i[data-v='8'] .cell__note-shape,
+.swatch[data-value='8'] .swatch__shape {
+  color: var(--c8);
+}
+
+.cell[data-value='8'] .cell__glyph {
+  color: var(--i8);
+}
+
+.cell__notes i[data-v='8'][data-on] {
+  background: var(--c8);
+}
+
+.board[data-peer='8'] {
+  --peer-color: var(--c8);
+}
+
+.swatch[data-value='8'] {
+  --swatch: var(--c8);
+  --swatch-ring: var(--r8);
+  --swatch-ink: var(--i8);
+}
+
+.cell[data-value='9'] .cell__fill {
+  background-color: var(--c9);
+  --fill-ring: inset 0 0 0 1.5px var(--r9);
+  color: var(--i9);
+}
+
+.cell[data-value='9'] .cell__shape,
+.cell__notes i[data-v='9'] .cell__note-shape,
+.swatch[data-value='9'] .swatch__shape {
+  color: var(--c9);
+}
+
+.cell[data-value='9'] .cell__glyph {
+  color: var(--i9);
+}
+
+.cell__notes i[data-v='9'][data-on] {
+  background: var(--c9);
+}
+
+.board[data-peer='9'] {
+  --peer-color: var(--c9);
+}
+
+.swatch[data-value='9'] {
+  --swatch: var(--c9);
+  --swatch-ring: var(--r9);
+  --swatch-ink: var(--i9);
+}
+
+/* --------------------------------------------------------------------------
+   The shortcut bar under the board
+   -------------------------------------------------------------------------- */
+
+.shortcut-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem 0.9rem;
+  width: min(100%, 34rem);
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.76rem;
+}
+
+.shortcut-bar[hidden] {
+  display: none;
+}
+
+.shortcut-bar__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.shortcut-bar kbd {
+  min-width: 1.5em;
+  padding: 0.1em 0.34em;
+  font-size: 0.7rem;
+}
+
+.shortcut-bar__more {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Rebinding keys in the settings sheet
+   -------------------------------------------------------------------------- */
+
+.keys {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.keys__group {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.keys__title {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.keys__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.keys__row:last-child {
+  border-bottom: 0;
+}
+
+.keys__label {
+  font-size: 0.88rem;
+}
+
+.keys__button {
+  min-width: 6.5rem;
+  padding: 0.3rem 0.6rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.keys__button[aria-pressed='true'] {
+  border-color: var(--focus);
+  box-shadow: inset 0 0 0 1px var(--focus);
+  color: var(--focus);
+}
+
+.keys__button[data-unset='true'] {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+/* --------------------------------------------------------------------------
+   The confirm dialog
+   -------------------------------------------------------------------------- */
+
+.confirm {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1.3rem;
+  text-align: left;
+}
+
+.confirm__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.confirm__text {
+  margin: 0 0 0.7rem;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
