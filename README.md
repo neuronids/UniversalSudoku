@@ -6,6 +6,8 @@ picking your own nine colours, and the option of playing by shape instead.
 
 No build step, no dependencies: it is plain HTML, CSS and ES modules.
 
+**Play it: <https://neuronids.github.io/UniversalSudoku/>**
+
 ![The board with the default palette](docs/screenshot-board.png)
 
 ## Play
@@ -221,7 +223,7 @@ makes them testable in plain Node.
 npm test
 ```
 
-89 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
+110 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
 the colour maths (contrast, perceptual distance, palette validation), the game
 state machine (undo across notes, win detection, snapshot round-trips), board
 navigation (edge clamping, wrap-around, full boards), puzzle links (round-trips
@@ -229,8 +231,16 @@ and every malformed fragment) and storage (every corrupt-input path).
 
 ## Deploying
 
-It is a static site — serve the repository root as-is. For GitHub Pages, enable
-Pages on the branch and set the folder to `/` (root); no build step is involved.
+It is a static site — serve the repository root as-is; there is no build step.
+
+Pushing to `claude/main` runs `.github/workflows/pages.yml`, which runs the
+tests, copies `index.html`, `favicon.svg`, `manifest.webmanifest`, `src/` and
+`styles/` into the published site, and deploys it to
+<https://neuronids.github.io/UniversalSudoku/>. The workflow switches GitHub
+Pages on the first time it runs, so there is nothing to set by hand.
+
+Every path in the page is relative, so the site works from the
+`/UniversalSudoku/` sub-path as well as from a domain root.
 
 ## Licence
 
