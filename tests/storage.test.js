@@ -34,6 +34,12 @@ test('settings default when nothing is stored', () => {
   assert.deepEqual(storage.loadSettings(), DEFAULT_SETTINGS);
 });
 
+test('a fresh board starts on 10 + 2, drawn as shapes', () => {
+  const settings = storage.loadSettings();
+  assert.equal(settings.paletteId, 'ten-plus-two');
+  assert.equal(settings.cellStyle, 'shape');
+});
+
 test('lastSymbols defaults to numbers so the toggle has something to restore', () => {
   assert.equal(DEFAULT_SETTINGS.lastSymbols, 'numbers');
   assert.equal(storage.loadSettings().lastSymbols, 'numbers');

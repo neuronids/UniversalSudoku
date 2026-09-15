@@ -1,14 +1,16 @@
 # UniversalSudoku
 
-Sudoku, but the nine symbols are colours instead of digits. It ships with eight
-palettes — including a colour-blind safe one and a grey scale — an editor for
-picking your own nine colours, and the option of playing by shape instead.
+Sudoku, but the nine symbols are colours instead of digits. Out of the box each
+number is drawn as its own post-it shape in its own colour from the 10 + 2
+palette; the cell can be flooded with flat colour instead, any time. It ships
+with eight palettes — including a colour-blind safe one and a grey scale — and
+an editor for picking your own nine colours.
 
 No build step, no dependencies: it is plain HTML, CSS and ES modules.
 
 **Play it: <https://neuronids.github.io/UniversalSudoku/>**
 
-![The board with the default palette](docs/screenshot-board.png)
+![The board with the default palette and shapes](docs/screenshot-board.png)
 
 ## Play
 
@@ -37,8 +39,10 @@ does the same, as does `Esc`. Clearing a cell is the Erase button or
 `Backspace`.
 
 Every cell is drawn the same way, whether the puzzle came with it or you put it
-there yourself — one flat colour, edge to edge, on a board with no frame around
-it and unbroken lines between the nine boxes.
+there yourself — by default the number's post-it shape in the number's colour,
+on a board with no frame around it and unbroken lines between the nine boxes.
+Switching to "Colour" under **How a cell is drawn** floods the cell with that
+colour, edge to edge, instead.
 
 | Key | Does |
 | --- | --- |
@@ -87,12 +91,13 @@ already holds it, so you can sweep the board for one colour without having to
 find a cell containing it first. Selecting a cell that holds a colour highlights
 that one instead.
 
-### Shapes instead of colours
+### Shapes and colours
 
-Under **How a cell is drawn**, "Shapes" swaps the flooded colour for the shape
-that belongs to that number — circle, square, triangle, plus, minus, wave, star,
-chevron and smile, the nine post-it shapes — drawn in the number's colour on a
-plain cell. Pencil marks become miniatures of the same shapes.
+**How a cell is drawn** picks between the two. "Shapes", the default, draws the
+shape that belongs to the number — circle, square, triangle, plus, minus, wave,
+star, chevron and smile, the nine post-it shapes — in the number's colour on a
+plain cell, with pencil marks as miniatures of the same shapes. "Colour" drops
+the shape and floods the whole cell with the colour instead.
 
 **Turn colour off** goes one step further and draws every shape in a single ink.
 That turns shapes on for you, because nine identical black squares would not be
@@ -126,8 +131,8 @@ Eight presets ship with the app:
 
 | Preset | For |
 | --- | --- |
-| **Default** | The spectrum in order, yellow round to green. |
-| **10 + 2** | Nine colours picked to stay well apart from one another. |
+| **10 + 2** | Nine colours picked to stay well apart from one another. The default. |
+| **Spectrum** | The spectrum in order, yellow round to green. |
 | **Pastel** | Soft tones, tuned so no two are close. |
 | **Vibrant** | Saturated and high-energy. |
 | **Colour-blind safe** | Okabe–Ito based; stays readable without red/green vision. |
@@ -145,17 +150,20 @@ random, and save the result as a preset of your own.
 
 Colour alone is not enough for everyone, so the palette is only one of the cues:
 
-- **Shapes.** Every number has a shape as well as a colour, and the board can be
-  drawn with shapes instead of fills — or with shapes alone, colour off.
-- **Symbols.** Numbers or letters can be drawn on top of every colour,
-  toggled from the board with the Symbols button or `T` — it brings back the set
-  you last used rather than always jumping to numbers. The ink is picked
-  automatically per swatch, always at 4.5:1 contrast or better.
+- **Shapes.** Every number has a shape as well as a colour, and the board is
+  drawn with shapes rather than fills to begin with — or with shapes alone,
+  colour off.
+- **Symbols.** With the cell flooded with colour, numbers or letters can be
+  drawn on top of every one, toggled from the board with the Symbols button or
+  `T` — it brings back the set you last used rather than always jumping to
+  numbers. The ink is picked automatically per swatch, always at 4.5:1 contrast
+  or better. In shape mode the shape is already the symbol, so the toggle sits
+  out.
 - **A warning when colours are too close.** Custom palettes are checked in CIE
   L\*a\*b\* space; if two swatches land within ΔE 18 the settings sheet names the
-  pair and offers to switch symbols on. (Grey scale trips this by design — nine
-  steps of one hue cannot be far apart, which is why that preset recommends
-  symbols.)
+  pair and offers to switch symbols on — it stays quiet when a second cue is
+  already up, shapes included. (Grey scale trips this by design — nine steps of
+  one hue cannot be far apart, which is why that preset recommends symbols.)
 - **A ring on every filled cell**, in a darker or lighter shade of the fill,
   whichever separates further. A white swatch still reads as filled.
 - **Clashes marked twice over**: a red ring *and* a diagonal hatch drawn in the
@@ -174,7 +182,7 @@ name tells a screen-reader user nothing, and the number stays stable when the
 palette or symbol set changes. Light and dark themes both follow the system setting by
 default, and everything respects `prefers-reduced-motion`.
 
-![Colour-blind safe palette with numbers, dark theme](docs/screenshot-cvd-dark.png)
+![Colour-blind safe palette with numbers on flooded cells, dark theme](docs/screenshot-cvd-dark.png)
 
 ## Difficulty
 
@@ -223,7 +231,7 @@ makes them testable in plain Node.
 npm test
 ```
 
-110 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
+111 tests over the engine (uniqueness, ratings, conflicts, seeded repeatability),
 the colour maths (contrast, perceptual distance, palette validation), the game
 state machine (undo across notes, win detection, snapshot round-trips), board
 navigation (edge clamping, wrap-around, full boards), puzzle links (round-trips

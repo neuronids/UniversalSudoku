@@ -20,7 +20,7 @@ export const DEFAULT_SETTINGS = {
   /** Overrides applied on top of the chosen palette, as `{index: hex}`. */
   overrides: {},
   symbols: 'none', // none | numbers | letters
-  cellStyle: 'fill', // fill: the colour floods the cell | shape: a post-it shape in that colour
+  cellStyle: 'shape', // shape: a post-it shape in that colour | fill: the colour floods the cell
   monochrome: false, // draw every shape in one ink instead of nine colours
   lastSymbols: 'numbers', // what the symbol toggle turns back on
   theme: 'system', // system | light | dark

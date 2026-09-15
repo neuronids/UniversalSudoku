@@ -6,7 +6,7 @@
     <title>UniversalSudoku — sudoku with colours instead of numbers</title>
     <meta
       name="description"
-      content="A sudoku you play with colours instead of numbers. Pastel by default, with vibrant, colour-blind safe and grey scale presets — or pick your own nine colours."
+      content="A sudoku you play with colours and shapes instead of numbers. The 10 + 2 palette and the nine post-it shapes by default, with vibrant, colour-blind safe and grey scale presets — or pick your own nine colours."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
@@ -294,7 +294,7 @@
         <section class="panel">
           <h3 class="panel__title">How a cell is drawn</h3>
           <p class="panel__hint">
-            Flood the cell with its colour, or draw the post-it shape that belongs to it.
+            Draw the post-it shape that belongs to the number, or flood the cell with its colour.
           </p>
           <div class="segmented" id="cell-style" role="radiogroup" aria-label="How a cell is drawn"></div>
           <div class="switches" id="colour-switches"></div>
@@ -303,8 +303,9 @@
         <section class="panel">
           <h3 class="panel__title">Symbols on the colours</h3>
           <p class="panel__hint">
-            A second cue on every cell. Helpful with the grey scale palette, or any time colours alone
-            are hard work.
+            A second cue on every cell, for when the cell is flooded with colour — in shape mode the
+            shape is already the symbol. Helpful with the grey scale palette, or any time colours
+            alone are hard work.
           </p>
           <div class="segmented" id="symbols" role="radiogroup" aria-label="Symbols on the colours"></div>
         </section>

@@ -22,8 +22,8 @@ import { formatTime } from './ui.js';
 const el = (tag, className, props = {}) => Object.assign(document.createElement(tag), { className, ...props });
 
 const CELL_STYLES = [
-  ['fill', 'Colour'],
   ['shape', 'Shapes'],
+  ['fill', 'Colour'],
 ];
 
 const COLOUR_SWITCHES = [
@@ -406,7 +406,9 @@ export class SettingsSheet {
     const notice = this.refs.notice;
     const colors = resolveColors(this.settings);
     const close = findCloseColors(colors);
-    if (!close.length || this.settings.symbols !== 'none') {
+    // Nothing to warn about once a second cue is already up: a symbol on every
+    // colour, or the shapes, which are the symbols in shape mode.
+    if (!close.length || this.settings.symbols !== 'none' || this.settings.cellStyle === 'shape') {
       notice.hidden = true;
       notice.textContent = '';
       return;
