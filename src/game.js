@@ -28,6 +28,21 @@ export const notesToValues = (mask) => {
   return values;
 };
 
+/**
+ * What `emit` dispatches: an Event carrying its payload on `detail`.
+ *
+ * This was a CustomEvent, which is the same thing — but CustomEvent only
+ * became a global in Node 19, and package.json still promises Node 18, where
+ * the suite could not so much as construct a Game. Event has been global since
+ * Node 15, and a subclass with one field costs less than the promise.
+ */
+class GameEvent extends Event {
+  constructor(type, detail) {
+    super(type);
+    this.detail = detail;
+  }
+}
+
 export class Game extends EventTarget {
   constructor() {
     super();
@@ -354,6 +369,6 @@ export class Game extends EventTarget {
   }
 
   emit(type, detail = {}) {
-    this.dispatchEvent(new CustomEvent(type, { detail }));
+    this.dispatchEvent(new GameEvent(type, detail));
   }
 }
