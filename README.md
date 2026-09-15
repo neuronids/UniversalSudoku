@@ -233,11 +233,14 @@ and every malformed fragment) and storage (every corrupt-input path).
 
 It is a static site — serve the repository root as-is; there is no build step.
 
-Pushing to `claude/main` runs `.github/workflows/pages.yml`, which runs the
-tests, copies `index.html`, `favicon.svg`, `manifest.webmanifest`, `src/` and
-`styles/` into the published site, and deploys it to
-<https://neuronids.github.io/UniversalSudoku/>. The workflow switches GitHub
-Pages on the first time it runs, so there is nothing to set by hand.
+The site is served from the `gh-pages` branch, which holds only what the page
+loads: `index.html`, `favicon.svg`, `manifest.webmanifest`, `src/` and
+`styles/`. Pushing to `claude/main` runs `.github/workflows/pages.yml`, which
+runs the tests and, if they pass, rewrites that branch; GitHub builds and
+deploys it from there to <https://neuronids.github.io/UniversalSudoku/>.
+
+Publishing by hand is the same three steps — assemble those files, commit them
+to `gh-pages`, push.
 
 Every path in the page is relative, so the site works from the
 `/UniversalSudoku/` sub-path as well as from a domain root.
